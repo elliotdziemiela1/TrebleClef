@@ -1,5 +1,7 @@
+$bs-light: orange;
+
 @use "bootstrap/scss/bootstrap" with (
-  $primary: red
+  $light: $bs-light
 );
 
 :root {

@@ -1,18 +1,25 @@
 import { Nav, Navbar } from "react-bootstrap";
 import './App.module.scss'
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import Home from "./home.tsx";
+import EditorPage from "./EditorPage.tsx";
 
 function App() {
   return (
-    <div className="App">
-      <p>Hello World!</p>
-      <Navbar>
-        <Nav>
-          <Nav.Link href="#home">Home</Nav.Link>
-          <Nav.Link href="#about">About</Nav.Link>
-          <Nav.Link href="#contact">Contact</Nav.Link>
-        </Nav>
-      </Navbar>
-    </div>
+    <BrowserRouter>
+      <div className="App">
+        <Navbar expand="sm" bg="light" >
+          <Nav>
+            <Nav.Link href="/">Home</Nav.Link>
+            <Nav.Link href="/editor">Editor</Nav.Link>
+          </Nav>
+        </Navbar>
+        <Routes>
+          <Route path="/" element={<Home/>}/>
+          <Route path="/editor" element={<EditorPage/>}/>
+        </Routes>
+      </div>
+    </BrowserRouter>
   )
 }
 
