@@ -25,16 +25,16 @@ export var demoScore : Score = {
             notes: [
                 { keys: ['f/6'], duration: 'q' },
                 { keys: ['d/4'], duration: 'q' },
-                { keys: ['c/e'], duration: 'q', type: 'r' },
+                { keys: ['c/3'], duration: 'q', type: 'r' },
                 { keys: ['f/4'], duration: 'q' }
             ]
         },
         {
             notes: [
-                { keys: ['c/4'], duration: 'h' },
-                { keys: ['d/4'], duration: 'q' },
-                { keys: ['e/3'], duration: '8' },
-                { keys: ['f/4'], duration: '8' }
+                { keys: ['c/2'], duration: 'h' },
+                { keys: ['d/2'], duration: 'q' },
+                { keys: ['e/2'], duration: '8' },
+                { keys: ['f/2'], duration: '8' }
             ]
         },
         {

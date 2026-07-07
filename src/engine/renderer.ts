@@ -1,7 +1,7 @@
 import VexFlow, { Element, Stem, Flag, Renderer, RenderContext, Stave, StaveNote, Voice, Formatter } from 'vexflow';
 import type { Note, Score } from './score';
 
-export const pixelsPerStaveY = 130;
+export const pixelsPerStaveY = 150;
 export const staveStartX = 0;
 export const staveStartY = 50;
 export const pixelsPerMeasureX = 240;
@@ -108,11 +108,10 @@ export function renderScore(container: HTMLDivElement, score: Score) {
 			glyph.setText(noteHeadGlyph);    
 			glyph.setFontSize(noteFontSize);            // controls the glyph's rendered size
 			glyph.setX(x);
-			glyph.setY(y - semitonesAboveb4 * (spacingBetweenLines / 2));
+			glyph.setY(y - (semitonesAboveb4 * (spacingBetweenLines / 2)));
 			glyph.renderText(ctx, 0, 0);
             
             // draw ledger lines if the note is above or below the staff
-            debugger
             // const semitonesAbovef4 = noteDiff(note, {keys: ['f/4'], duration: 'q'});
             // const semitonesBelowe3 = -noteDiff(note, {keys: ['e/3'], duration: 'q'});
 
@@ -130,6 +129,7 @@ export function renderScore(container: HTMLDivElement, score: Score) {
             //     }
             // }
 
+            debugger
             if (semitonesAboveb4 >= 6){
                 for (let j = semitonesAboveb4; j >= 6; j--){
                     if (j % 2 === 0){
@@ -137,7 +137,7 @@ export function renderScore(container: HTMLDivElement, score: Score) {
                     }
                 }
             } else if (semitonesAboveb4 <= -6){
-                for (let j = semitonesAboveb4; j < -6; j++){
+                for (let j = semitonesAboveb4; j <= -6; j++){
                     if (j % 2 === 0){
                         drawLedgerLine(ctx, x + (glyph.getWidth() / 2), y - (j * (spacingBetweenLines / 2)), ledgerWidth * (noteFontSize / maxNoteFontSize));
                     }
@@ -146,7 +146,7 @@ export function renderScore(container: HTMLDivElement, score: Score) {
             
 			if (note.duration !== 'w'){
                 // draw the stem
-                const stemXOffset = stemDirection === Stem.UP ? glyph.getWidth() : 1; // offset the stem to the right of the notehead by half the font size
+                const stemXOffset = stemDirection === Stem.UP ? glyph.getWidth() - 1 : 1; // offset the stem to the right of the notehead by half the font size
 				let stemX = glyph.getX() + stemXOffset;
 				const stemExtension = !!flagGlyph ? 7 : 4; // extension for flags/beams
 				const stem = new Stem({
