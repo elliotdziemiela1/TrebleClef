@@ -2,7 +2,7 @@ import styles from './Editor.module.scss';
 import { useRef, useEffect, useState, useCallback } from 'react';
 import { renderScore } from '../engine/renderer';
 import { demoScore, emptyScore, type Score, type Note, type Measure, type Duration } from '../engine/score';
-import { pixelsPerMeasureX, pixelsPerStaveY, 
+import { pixelsPerMeasureX, pixelsPerStaveY, staveStartX, staveStartY, 
   rendererWidth, measuresPerStave } from '../engine/renderer'; // Will use these soon
 
 function getWidthOfNote(duration : Duration) : number {
