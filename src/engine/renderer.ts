@@ -30,8 +30,8 @@ export function calcNoteFontSize(duration: string): number {
 
 // returns the difference between two notes' pitches. returns pitch1 - pitch2.
 export function noteDiff(note1: Note, note2: Note): number { 
-    const note1Offset = -((note1.keys[0][0].charCodeAt(0) - 'b'.charCodeAt(0)) + ((Number(note1.keys[0][2]) - 4) * 7));
-    const note2Offset = -((note2.keys[0][0].charCodeAt(0) - 'b'.charCodeAt(0)) + ((Number(note2.keys[0][2]) - 4) * 7));
+    const note1Offset = ((note1.keys[0][0].charCodeAt(0) - 'b'.charCodeAt(0)) + ((Number(note1.keys[0][2]) - 4) * 7));
+    const note2Offset = ((note2.keys[0][0].charCodeAt(0) - 'b'.charCodeAt(0)) + ((Number(note2.keys[0][2]) - 4) * 7));
     return note1Offset - note2Offset;
 }
 
@@ -114,10 +114,10 @@ export function renderScore(container: HTMLDivElement, score: Score) {
 			glyph.renderText(ctx, 0, 0);
             
             // draw ledger lines if the note is above or below the staff
-            const semitonesAbovef4 = noteDiff(note, {keys: ['g/4'], duration: 'q'});
+            debugger
+            const semitonesAbovef4 = noteDiff(note, {keys: ['f/4'], duration: 'q'});
             const semitonesBelowe3 = -noteDiff(note, {keys: ['e/3'], duration: 'q'});
-            if (semitonesAbovef4 > 0 || semitonesBelowe3 > 0){
-                debugger
+            if (semitonesAbovef4 >= 2 || semitonesBelowe3 > 2){
                 drawLedgerLine(ctx, x + (glyph.getWidth() / 2), y + noteOffset, ledgerWidth * (noteFontSize / maxNoteFontSize));
             }
             
