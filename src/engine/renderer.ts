@@ -3,7 +3,7 @@ import type { Note, Score } from './score';
 
 export const pixelsPerStaveY = 130;
 export const staveStartX = 0;
-export const staveStartY = 0;
+export const staveStartY = 50;
 export const pixelsPerMeasureX = 240;
 export const measuresPerStave = 4;
 export const clefPadding = 30; // the number of extra pixels added to the width of a measure to 
@@ -12,8 +12,8 @@ export const rendererWidth = pixelsPerMeasureX * measuresPerStave + clefPadding;
 export const baseHeight = 2 * pixelsPerStaveY; 
 export const measureWidthPadding = 20;
 export const spacingBetweenLines = 10;
-export const ledgerWidth = 35; // the width of the ledger lines that are drawn for notes above or below the staff
-export const maxNoteFontSize = 40;
+export const ledgerWidth = 36; // the width of the ledger lines that are drawn for notes above or below the staff
+export const maxNoteFontSize = 38;
 
 const quarterNoteGlyph = "\uE0A4";
 const halfNoteGlyph = "\uE0A3";
@@ -21,7 +21,7 @@ const wholeNoteGlyph = "\uE1D2";
 
 export function calcNoteFontSize(duration: string): number {
     switch (duration) {
-        case '8': return 38;
+        case '8': return 36;
         case '16': return 30;
         case '32': return 16;
         default: return maxNoteFontSize;
@@ -45,9 +45,6 @@ function drawLedgerLine(ctx: RenderContext, x: number, y: number, width: number,
 export function renderScore(container: HTMLDivElement, score: Score) {
 	container.innerHTML = ''; // VexFlow can't update in place — clear and redraw
 	const renderer = new Renderer(container, Renderer.Backends.SVG);
-	
-	// let x = staveStartX;
-	// let y = staveStartY;
 
 	renderer.resize(rendererWidth + 1, pixelsPerStaveY);
 	const ctx = renderer.getContext();
@@ -58,8 +55,8 @@ export function renderScore(container: HTMLDivElement, score: Score) {
 		if (i % 4 === 0){
 			renderer.resize(rendererWidth + 1, pixelsPerStaveY * (Math.floor(i / 4) + 1));
 		}
-		const measureStartX = (i % 4 * pixelsPerMeasureX) + clefPadding;
-		const measureStartY = pixelsPerStaveY * Math.floor(i / 4);
+		const measureStartX = (i % 4 * pixelsPerMeasureX) + clefPadding + staveStartX;
+		const measureStartY = pixelsPerStaveY * Math.floor(i / 4) + staveStartY;
 		const stave = new Stave(measureStartX, measureStartY, pixelsPerMeasureX, {spacingBetweenLinesPx: spacingBetweenLines});
 		let x = measureStartX + (measureWidthPadding / 2) ;
 		let y = measureStartY + 1 + (spacingBetweenLines * 6);
@@ -80,12 +77,13 @@ export function renderScore(container: HTMLDivElement, score: Score) {
             // Calculate variables for rendering the note
             let flagGlyph = null;
             let noteHeadGlyph = quarterNoteGlyph;
-            let stemDirection = Stem.DOWN; // or Stem.UP
-			const noteOffset = -(((note.keys[0][0].charCodeAt(0) - 'b'.charCodeAt(0)) + ((Number(note.keys[0][2]) - 4) * 7)) * (spacingBetweenLines ) / 2);
+            let stemDirection = Stem.UP; // or Stem.UP
+			// const noteOffset = -(((note.keys[0][0].charCodeAt(0) - 'b'.charCodeAt(0)) + ((Number(note.keys[0][2]) - 4) * 7)) * (spacingBetweenLines ) / 2);
+            const semitonesAboveb4 = noteDiff(note, {keys: ['b/4'], duration: 'q'});
             const noteFontSize = calcNoteFontSize(note.duration);
             
-            if (noteOffset > 0){
-                stemDirection = Stem.UP;
+            if (semitonesAboveb4 > 0){
+                stemDirection = Stem.DOWN;
             }
 
             switch(note.duration){
@@ -110,15 +108,40 @@ export function renderScore(container: HTMLDivElement, score: Score) {
 			glyph.setText(noteHeadGlyph);    
 			glyph.setFontSize(noteFontSize);            // controls the glyph's rendered size
 			glyph.setX(x);
-			glyph.setY(y + noteOffset);
+			glyph.setY(y - semitonesAboveb4 * (spacingBetweenLines / 2));
 			glyph.renderText(ctx, 0, 0);
             
             // draw ledger lines if the note is above or below the staff
             debugger
-            const semitonesAbovef4 = noteDiff(note, {keys: ['f/4'], duration: 'q'});
-            const semitonesBelowe3 = -noteDiff(note, {keys: ['e/3'], duration: 'q'});
-            if (semitonesAbovef4 >= 2 || semitonesBelowe3 > 2){
-                drawLedgerLine(ctx, x + (glyph.getWidth() / 2), y + noteOffset, ledgerWidth * (noteFontSize / maxNoteFontSize));
+            // const semitonesAbovef4 = noteDiff(note, {keys: ['f/4'], duration: 'q'});
+            // const semitonesBelowe3 = -noteDiff(note, {keys: ['e/3'], duration: 'q'});
+
+            // if (semitonesAboveb4 >= 6){
+            //     for (let j = 0; j <= semitonesAboveb4 - 6; j++){
+            //         if (j % 2 === 0){
+            //             drawLedgerLine(ctx, x + (glyph.getWidth() / 2), y - ((semitonesAboveb4 - j) * (spacingBetweenLines / 2)), ledgerWidth * (noteFontSize / maxNoteFontSize));
+            //         }
+            //     }
+            // } else if (semitonesAboveb4 <= -6){
+            //     for (let j = 0; j >= semitonesAboveb4 + 6; j--){
+            //         if (j % 2 === 0){
+            //             drawLedgerLine(ctx, x + (glyph.getWidth() / 2), y - ((semitonesAboveb4 - j) * (spacingBetweenLines / 2)), ledgerWidth * (noteFontSize / maxNoteFontSize));
+            //         }
+            //     }
+            // }
+
+            if (semitonesAboveb4 >= 6){
+                for (let j = semitonesAboveb4; j >= 6; j--){
+                    if (j % 2 === 0){
+                        drawLedgerLine(ctx, x + (glyph.getWidth() / 2), y - (j * (spacingBetweenLines / 2)), ledgerWidth * (noteFontSize / maxNoteFontSize));
+                    }
+                }
+            } else if (semitonesAboveb4 <= -6){
+                for (let j = semitonesAboveb4; j < -6; j++){
+                    if (j % 2 === 0){
+                        drawLedgerLine(ctx, x + (glyph.getWidth() / 2), y - (j * (spacingBetweenLines / 2)), ledgerWidth * (noteFontSize / maxNoteFontSize));
+                    }
+                }
             }
             
 			if (note.duration !== 'w'){

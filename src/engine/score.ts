@@ -23,9 +23,9 @@ export var demoScore : Score = {
     measures: [
         {
             notes: [
-                { keys: ['e/3'], duration: 'q' },
+                { keys: ['f/6'], duration: 'q' },
                 { keys: ['d/4'], duration: 'q' },
-                { keys: ['b/4'], duration: 'q', type: 'r' },
+                { keys: ['c/e'], duration: 'q', type: 'r' },
                 { keys: ['f/4'], duration: 'q' }
             ]
         },
@@ -49,12 +49,14 @@ export var demoScore : Score = {
         },
         {
             notes: [
-                { keys: ['b/4'], duration: 'w', type: 'r' }
+                { keys: ['c/5'], duration: '16', type: 'r' },
+                { keys: ['b/5'], duration: '16', type: 'r' },
+                { keys: ['c/5'], duration: 'h', type: 'r' }
             ]
         },
         {
             notes: [
-                { keys: ['c/5'], duration: 'w' }
+                { keys: ['d/5'], duration: 'w' }
             ]
         },
         {
@@ -71,7 +73,7 @@ export var demoScore : Score = {
                 { keys: ['b/4'], duration: '32', type: 'r' },
                 { keys: ['b/4'], duration: '32', type: 'r' },
                 { keys: ['b/4'], duration: '32', type: 'r' },
-                { keys: ['c/5'], duration: 'h' }
+                { keys: ['a/3'], duration: 'h' }
                 
             ]
         },
