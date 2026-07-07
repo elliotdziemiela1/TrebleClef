@@ -3,7 +3,7 @@ export type Duration = 'w' | 'h' | 'q' | '8' | '16' | '32';
 // export type Duration = 1 | 2 | 4 | 8 | 16 | 32;
 export type Note = { keys: string[]; duration: Duration, type?: string, color?: string }; // e.g. keys: ["c/4"], or, \
 // type: "r" for rest, or, type : "s" for slash note
-export type Measure = { notes: Note[] };
+export type Measure = { notes: Note[] }; // notes will be sorted from highest to lowest
 export type Score = { measures: Measure[]; clef: 'treble' | 'bass' };
 
 
@@ -59,13 +59,20 @@ export var demoScore : Score = {
         },
         {
             notes: [
-                { keys: ['b/4'], duration: '16', type: 'r' },
-                { keys: ['b/4'], duration: '16', type: 'r' },
-                { keys: ['b/4'], duration: '16', type: 'r' },
-                { keys: ['b/4'], duration: '16', type: 'r' },
-                { keys: ['b/4'], duration: '8', type: 'r' },
-                { keys: ['b/4'], duration: '8', type: 'r' },
-                { keys: ['b/4'], duration: 'h', type: 'r' },
+                { keys: ['b/5'], duration: '16', type: 'r' },
+                { keys: ['a/5'], duration: '16', type: 'r' },
+                { keys: ['g/4'], duration: '16', type: 'r' },
+                { keys: ['a/5'], duration: '16', type: 'r' },
+                { keys: ['d/5'], duration: '32', type: 'r' },
+                { keys: ['e/5'], duration: '32', type: 'r' },
+                { keys: ['b/4'], duration: '32', type: 'r' },
+                { keys: ['b/4'], duration: '32', type: 'r' },
+                { keys: ['b/4'], duration: '32', type: 'r' },
+                { keys: ['b/4'], duration: '32', type: 'r' },
+                { keys: ['b/4'], duration: '32', type: 'r' },
+                { keys: ['b/4'], duration: '32', type: 'r' },
+                { keys: ['c/5'], duration: 'h' }
+                
             ]
         },
         {
