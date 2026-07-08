@@ -1,6 +1,6 @@
 import styles from './Editor.module.scss';
 import { useRef, useEffect, useState, useCallback, useLayoutEffect } from 'react';
-import { calcNoteWidth, effectiveMeasureWidth, renderScore } from '../engine/renderer';
+import { calcNoteWidth, clefPadding, effectiveMeasureWidth, renderScore } from '../engine/renderer';
 import { demoScore, emptyScore, type Score, type Note, type Measure, type Duration } from '../engine/score';
 import { pixelsPerMeasureX, pixelsPerStaveY, staveStartX, staveStartY, 
 	rendererWidth, measuresPerStave, measureWidthPadding } from '../engine/renderer'; // Will use these soon
@@ -30,33 +30,39 @@ export default function Editor() {
 		const [ selectedNoteIdx, setSelectedNoteIdx ] = useState<number[] | null>(null);
 		const measureNoteLocationsRef = useRef<number[][]>(getMeasureNoteXLocations()); // stores the x locations of the notes in the selected measure
 
+		// calculates the offset within the measure for each note in the score. returns a 2D array where 
+		// each subarray corresponds to a measure and contains the x offsets of the notes in that measure.
 		function getMeasureNoteXLocations() : number[][] {
-			debugger
 			let measureNoteXLocations : number[][] = [[]];
 			for (let i = 0; i < score.measures.length; i++){
 				const selectedNotes = score.measures[i].notes;
-				// create an array of the client based x positions of each note in the measure
-				// calculate the rightmost note's x position, then work backwards to calculate the other notes' x positions
 				measureNoteXLocations[i] = [];
-				measureNoteXLocations[i][selectedNotes.length - 1] = staveStartX + pixelsPerMeasureX*((i%4)+1) - (measureWidthPadding/2) - calcNoteWidth(selectedNotes[selectedNotes.length - 1].duration);
-				for (let j = selectedNotes.length - 2; j >= 0; j--){
-					measureNoteXLocations[i][j] = measureNoteXLocations[i][j + 1] - calcNoteWidth(selectedNotes[j].duration);
+				// // the rightmost note is drawn one of it's widths away from the effective right edge of the measure. That is the middle of the note. The space it occupies is middle - 
+				// // (0.5*width) to middle + (0.5*width).
+				// measureNoteXLocations[i][selectedNotes.length - 1] = pixelsPerMeasureX - (measureWidthPadding/2) - 
+				// 	(calcNoteWidth(selectedNotes[selectedNotes.length - 1].duration) * 1.5);
+				// for (let j = selectedNotes.length - 2; j >= 0; j--){
+				// 	measureNoteXLocations[i][j] = measureNoteXLocations[i][j + 1] - calcNoteWidth(selectedNotes[j].duration); 
+				// }
+				measureNoteXLocations[i][0] = (measureWidthPadding / 2) - (calcNoteWidth(selectedNotes[0].duration) / 2);
+				for (let j = 1; j < selectedNotes.length; j++){
+					measureNoteXLocations[i][j] = measureNoteXLocations[i][j - 1] + calcNoteWidth(selectedNotes[j - 1].duration);
 				}
 			}
 			return measureNoteXLocations;
 		}
 
-
+		// function called when the score container is clicked. It determines which note was clicked on and updates the selectedNoteIdx state accordingly.
 		const selectNote = useCallback((event: React.MouseEvent<HTMLDivElement>) : boolean => {
 			setSelectedNoteIdx(null);
 			setSelectedMeasure(null);
 			if (!scoreContainerRef.current)
 				return false;
 			const boundingRect = scoreContainerRef.current.getBoundingClientRect();
-			const scoreLeft = boundingRect.left + staveStartX;
+			const scoreLeft = boundingRect.left + staveStartX + 7; // 7 is a fudge factor to account for the clef and stave padding
 			const scoreTop = boundingRect.top;
 			for (let i = 0; i < score.measures.length; i++){
-				const effectiveMeasureLeft = scoreLeft + (i * pixelsPerMeasureX) + (measureWidthPadding / 2);
+				const effectiveMeasureLeft = scoreLeft + clefPadding + (i * pixelsPerMeasureX) + (measureWidthPadding / 2);
 				const effectiveMeasureRight = effectiveMeasureLeft + effectiveMeasureWidth;
 				const measureTop = scoreTop + (Math.floor(i/4) * pixelsPerStaveY); 
 				const measureBottom = measureTop + pixelsPerStaveY;
@@ -66,14 +72,15 @@ export default function Editor() {
 					setSelectedMeasure(score.measures[i]);
 					// find the note that was clicked on
 					for (let j = measureNoteLocationsRef.current[i].length - 1; j >= 0; j--){
-						if (event.clientX > measureNoteLocationsRef.current[i][j]) {
+						measureNoteLocationsRef.current[i][j];
+						if (event.clientX - effectiveMeasureLeft > measureNoteLocationsRef.current[i][j]) {
 							setSelectedNoteIdx([i, j]);
-							break;
+							return true;
 						}
 					}
 				} 
 			}
-			return true;
+			return false;
 		}, [score]);
 
 // TODO change selectNote() to modify a copied score value, then just call setScore and bypass the useEffect
