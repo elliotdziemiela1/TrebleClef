@@ -33,6 +33,8 @@ export default function Editor() {
 		// calculates the offset within the effective measure (the measure excluding padding for first and last notes) 
 		// for each note in the score. returns a 2D array where 
 		// each subarray corresponds to a measure and contains the x offsets of the notes in that measure.
+		// This function is only computed the first time a score is rendered. Subsequent edits will go in and edit the locations array in place.
+		// Therefore, it's ok that this function is complex.
 		function getMeasureNoteXLocations() : number[][] {
 			let measureNoteXLocations : number[][] = [[]];
 			for (let i = 0; i < score.measures.length; i++){
@@ -44,7 +46,16 @@ export default function Editor() {
 				}
 				for (let j = 2; j < selectedNotes.length; j++){
 					// measureNoteXLocations[i][j] = measureNoteXLocations[i][j - 1] + (calcNoteWidth(selectedNotes[j - 1].duration) * 1.5) - (calcNoteWidth(selectedNotes[j].duration) / 2);
-					measureNoteXLocations[i][j] = measureNoteXLocations[i][j - 1] + (calcNoteWidth(selectedNotes[j - 2].duration) / 2) + (calcNoteWidth(selectedNotes[j - 1].duration) / 2);
+					let nextLocation = measureNoteXLocations[i][j - 1] + (calcNoteWidth(selectedNotes[j - 2].duration) / 2) + (calcNoteWidth(selectedNotes[j - 1].duration) / 2);
+
+					// 32nd note rests are rendered strangely, and need their bounding box extended to the right a little.
+					if (selectedNotes[j - 1].type === 'r' && selectedNotes[j - 1].duration === '32') {
+						nextLocation += 3; // fudge factor for 32nd notes
+					}
+					if (selectedNotes[j - 2].type === 'r' && selectedNotes[j-2].duration === '32') {
+						nextLocation -= 3; // fudge factor for 32nd notes
+					}
+					measureNoteXLocations[i][j] = nextLocation;
 
 				}
 			}
@@ -61,15 +72,15 @@ export default function Editor() {
 			const scoreLeft = boundingRect.left + staveStartX + 7; // 7 is a fudge factor to account for the clef and stave padding
 			const scoreTop = boundingRect.top;
 			for (let i = 0; i < score.measures.length; i++){
-				const measureLeft = scoreLeft + clefPadding + (i * pixelsPerMeasureX);
+				const measureLeft = scoreLeft + clefPadding + (i%4 * pixelsPerMeasureX);
 				const measureRight = measureLeft + pixelsPerMeasureX;
-				const effectiveMeasureLeft = measureLeft + (measureWidthPadding / 2);
+				const effectiveMeasureLeft = measureLeft + measureWidthPadding / 2;
 				const effectiveMeasureRight = effectiveMeasureLeft + effectiveMeasureWidth;
-				const measureTop = scoreTop + (Math.floor(i/4) * pixelsPerStaveY); 
+				const measureTop = scoreTop + Math.floor(i/4) * pixelsPerStaveY; 
 				const measureBottom = measureTop + pixelsPerStaveY;
 				// if clicked inside of this measure
+				debugger
 				if (event.clientX > measureLeft && event.clientX < measureRight && event.clientY > measureTop && event.clientY < measureBottom){
-					debugger
 					setSelectedMeasure(score.measures[i]);
 					// find the note that was clicked on
 					for (let j = measureNoteLocationsRef.current[i].length - 1; j >= 0; j--){
