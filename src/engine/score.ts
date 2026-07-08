@@ -26,14 +26,14 @@ export var demoScore : Score = {
                 { keys: ['c/6'], duration: 'q' },
                 { keys: ['d/4'], duration: 'q' },
                 { keys: ['b/4'], duration: 'q', type: 'r' },
-                { keys: ['f/4'], duration: 'q' }
+                { keys: ['f/4'], duration: 'q', color: "blue" }
             ]
         },
         {
             notes: [
                 { keys: ['b/4'], duration: 'h', type: 'r' },
                 { keys: ['b/4'], duration: 'q', type: 'r' },
-                { keys: ['b/4'], duration: '8', type: 'r' },
+                { keys: ['b/4'], duration: '8', type: 'r', color: "blue" },
                 { keys: ['b/4'], duration: '32', type: 'r' },
                 { keys: ['b/4'], duration: '32', type: 'r' },
                 { keys: ['b/4'], duration: '32', type: 'r' },

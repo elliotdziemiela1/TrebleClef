@@ -14,6 +14,7 @@ export const measureWidthPadding = 20;
 export const spacingBetweenLines = 10;
 export const ledgerWidth = 36; // the width of the ledger lines that are drawn for notes above or below the staff
 export const maxNoteFontSize = 38;
+export const effectiveMeasureWidth = pixelsPerMeasureX - measureWidthPadding;
 
 const quarterNoteGlyph = "\uE0A4";
 const halfNoteGlyph = "\uE0A3";
@@ -32,6 +33,10 @@ export function calcNoteFontSize(duration: string): number {
         case '32': return 20;
         default: return maxNoteFontSize;
     }
+}
+
+export function calcNoteWidth(duration: string): number {
+    return effectiveMeasureWidth / (duration === 'w' ? 1 : duration === 'h' ? 2 : duration === 'q' ? 4 :  parseInt(duration, 10));
 }
 
 // returns the difference between two notes' pitches. returns pitch1 - pitch2.
@@ -74,15 +79,17 @@ export function renderScore(container: HTMLDivElement, score: Score) {
 		}
 		stave.setContext(ctx).draw();
 
-		const effectiveMeasureWidth = pixelsPerMeasureX - measureWidthPadding;
-
 		for (const note of score.measures[i].notes) {
 			// 
 			// Rendering logic
 			//
             const semitonesAboveb4 = noteDiff(note, {keys: ['b/4'], duration: 'q'});
             const noteFontSize = calcNoteFontSize(note.duration);
-
+            ctx.fillStyle = "black"; // reset the fill color to black for each note
+            if (note.color){
+                ctx.fillStyle = note.color;
+            }
+            
             if (note.type === 'r'){
                 // draw the rest glyph
                 const restGlyph = new Element();
@@ -189,7 +196,7 @@ export function renderScore(container: HTMLDivElement, score: Score) {
 			// End of Rendering logic
 			//
 
-			x += effectiveMeasureWidth / (note.duration === 'w' ? 1 : note.duration === 'h' ? 2 : note.duration === 'q' ? 4 :  parseInt(note.duration, 10)); 
+			x += calcNoteWidth(note.duration); 
 		}
 	}
     if (process.env.NODE_ENV === 'development') {
