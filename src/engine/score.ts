@@ -23,7 +23,7 @@ export var demoScore : Score = {
     measures: [
         {
             notes: [
-                { keys: ['f/6'], duration: 'q' },
+                { keys: ['c/6'], duration: 'q' },
                 { keys: ['d/4'], duration: 'q' },
                 { keys: ['c/3'], duration: 'q', type: 'r' },
                 { keys: ['f/4'], duration: 'q' }

@@ -4,7 +4,7 @@ import type { Note, Score } from './score';
 export const pixelsPerStaveY = 150;
 export const staveStartX = 0;
 export const staveStartY = 50;
-export const pixelsPerMeasureX = 240;
+export const pixelsPerMeasureX = 270;
 export const measuresPerStave = 4;
 export const clefPadding = 30; // the number of extra pixels added to the width of a measure to 
 // include a clef
@@ -22,8 +22,8 @@ const wholeNoteGlyph = "\uE1D2";
 export function calcNoteFontSize(duration: string): number {
     switch (duration) {
         case '8': return 36;
-        case '16': return 30;
-        case '32': return 16;
+        case '16': return 32;
+        case '32': return 20;
         default: return maxNoteFontSize;
     }
 }
@@ -43,6 +43,7 @@ function drawLedgerLine(ctx: RenderContext, x: number, y: number, width: number,
 }
 
 export function renderScore(container: HTMLDivElement, score: Score) {
+    var startTimems = Date.now();
 	container.innerHTML = ''; // VexFlow can't update in place — clear and redraw
 	const renderer = new Renderer(container, Renderer.Backends.SVG);
 
@@ -182,6 +183,8 @@ export function renderScore(container: HTMLDivElement, score: Score) {
 
 			x += effectiveMeasureWidth / (note.duration === 'w' ? 1 : note.duration === 'h' ? 2 : note.duration === 'q' ? 4 :  parseInt(note.duration, 10)); 
 		}
-
 	}
+    if (process.env.NODE_ENV === 'development') {
+        console.log(`Rendering took ${Date.now() - startTimems} ms`);
+    }
 }
