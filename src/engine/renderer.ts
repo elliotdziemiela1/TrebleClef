@@ -30,7 +30,7 @@ export function calcNoteFontSize(duration: string): number {
     switch (duration) {
         case '8': return 36;
         case '16': return 32;
-        case '32': return 20;
+        case '32': return 16;
         default: return maxNoteFontSize;
     }
 }
@@ -193,6 +193,7 @@ export function renderScore(container: HTMLDivElement, score: Score) {
 			// End of Rendering logic
 			//
             ctx.fillStyle = "black"; // reset the fill color to black for each note
+
 
 			x += calcNoteWidth(note.duration); 
 		}
