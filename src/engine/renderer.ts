@@ -85,11 +85,10 @@ export function renderScore(container: HTMLDivElement, score: Score) {
 			//
             const semitonesAboveb4 = noteDiff(note, {keys: ['b/4'], duration: 'q'});
             const noteFontSize = calcNoteFontSize(note.duration);
-            ctx.fillStyle = "black"; // reset the fill color to black for each note
             if (note.color){
                 ctx.fillStyle = note.color;
             }
-            
+
             if (note.type === 'r'){
                 // draw the rest glyph
                 const restGlyph = new Element();
@@ -143,8 +142,6 @@ export function renderScore(container: HTMLDivElement, score: Score) {
                 glyph.renderText(ctx, 0, 0);
                 
                 // draw ledger lines if the note is above or below the staff
-
-                debugger
                 if (semitonesAboveb4 >= 6){
                     for (let j = semitonesAboveb4; j >= 6; j--){
                         if (j % 2 === 0){
@@ -195,6 +192,7 @@ export function renderScore(container: HTMLDivElement, score: Score) {
 			// 
 			// End of Rendering logic
 			//
+            ctx.fillStyle = "black"; // reset the fill color to black for each note
 
 			x += calcNoteWidth(note.duration); 
 		}

@@ -31,13 +31,16 @@ export default function Editor() {
 		const measureNoteLocationsRef = useRef<number[][]>(getMeasureNoteXLocations()); // stores the x locations of the notes in the selected measure
 
 		function getMeasureNoteXLocations() : number[][] {
+			debugger
 			let measureNoteXLocations : number[][] = [[]];
 			for (let i = 0; i < score.measures.length; i++){
 				const selectedNotes = score.measures[i].notes;
-				// create an array of the starting points of each note in the measure
+				// create an array of the client based x positions of each note in the measure
+				// calculate the rightmost note's x position, then work backwards to calculate the other notes' x positions
 				measureNoteXLocations[i] = [];
-				for (let j = selectedNotes.length - 1; j >= 0; j--){
-					measureNoteXLocations[i][j] = effectiveMeasureWidth - calcNoteWidth(selectedNotes[j].duration);
+				measureNoteXLocations[i][selectedNotes.length - 1] = staveStartX + pixelsPerMeasureX*((i%4)+1) - (measureWidthPadding/2) - calcNoteWidth(selectedNotes[selectedNotes.length - 1].duration);
+				for (let j = selectedNotes.length - 2; j >= 0; j--){
+					measureNoteXLocations[i][j] = measureNoteXLocations[i][j + 1] - calcNoteWidth(selectedNotes[j].duration);
 				}
 			}
 			return measureNoteXLocations;
@@ -55,14 +58,15 @@ export default function Editor() {
 			for (let i = 0; i < score.measures.length; i++){
 				const effectiveMeasureLeft = scoreLeft + (i * pixelsPerMeasureX) + (measureWidthPadding / 2);
 				const effectiveMeasureRight = effectiveMeasureLeft + effectiveMeasureWidth;
-				const measureTop = scoreTop + (i * pixelsPerStaveY); 
+				const measureTop = scoreTop + (Math.floor(i/4) * pixelsPerStaveY); 
 				const measureBottom = measureTop + pixelsPerStaveY;
 				// if clicked inside of this measure
-				if (event.screenX > effectiveMeasureLeft && event.screenX < effectiveMeasureRight && event.screenY > measureTop && event.screenY < measureBottom){
+				debugger
+				if (event.clientX > effectiveMeasureLeft && event.clientX < effectiveMeasureRight && event.clientY > measureTop && event.clientY < measureBottom){
 					setSelectedMeasure(score.measures[i]);
 					// find the note that was clicked on
 					for (let j = measureNoteLocationsRef.current[i].length - 1; j >= 0; j--){
-						if (event.screenX > effectiveMeasureLeft + measureNoteLocationsRef.current[i][j]) {
+						if (event.clientX > measureNoteLocationsRef.current[i][j]) {
 							setSelectedNoteIdx([i, j]);
 							break;
 						}
@@ -72,14 +76,18 @@ export default function Editor() {
 			return true;
 		}, [score]);
 
+// TODO change selectNote() to modify a copied score value, then just call setScore and bypass the useEffect
+
+
 		useEffect(() => {
-			if (selectedNoteIdx) {
-				setScore((prevScore) => {
-					const newScore = { ...prevScore };
+			
+			setScore((prevScore) => {
+				const newScore = { ...prevScore };
+				if (selectedNoteIdx) {
 					newScore.measures[selectedNoteIdx[0]].notes[selectedNoteIdx[1]].color = "blue";
-					return newScore;
-				});
-			}
+				}
+				return newScore;
+			});
 		}, [selectedNoteIdx]);
 
 
