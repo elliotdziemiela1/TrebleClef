@@ -25,16 +25,19 @@ export var demoScore : Score = {
             notes: [
                 { keys: ['c/6'], duration: 'q' },
                 { keys: ['d/4'], duration: 'q' },
-                { keys: ['c/3'], duration: 'q', type: 'r' },
+                { keys: ['b/4'], duration: 'q', type: 'r' },
                 { keys: ['f/4'], duration: 'q' }
             ]
         },
         {
             notes: [
-                { keys: ['c/2'], duration: 'h' },
-                { keys: ['d/2'], duration: 'q' },
-                { keys: ['e/2'], duration: '8' },
-                { keys: ['f/2'], duration: '8' }
+                { keys: ['b/4'], duration: 'h', type: 'r' },
+                { keys: ['b/4'], duration: 'q', type: 'r' },
+                { keys: ['b/4'], duration: '8', type: 'r' },
+                { keys: ['b/4'], duration: '32', type: 'r' },
+                { keys: ['b/4'], duration: '32', type: 'r' },
+                { keys: ['b/4'], duration: '32', type: 'r' },
+                { keys: ['b/4'], duration: '32', type: 'r' }
             ]
         },
         {
@@ -61,15 +64,15 @@ export var demoScore : Score = {
         },
         {
             notes: [
-                { keys: ['b/5'], duration: '16', type: 'r' },
-                { keys: ['a/5'], duration: '16', type: 'r' },
-                { keys: ['g/4'], duration: '16', type: 'r' },
-                { keys: ['a/5'], duration: '16', type: 'r' },
-                { keys: ['d/5'], duration: '32', type: 'r' },
-                { keys: ['e/5'], duration: '32', type: 'r' },
+                { keys: ['b/5'], duration: '16'},
+                { keys: ['a/5'], duration: '16'},
+                { keys: ['g/4'], duration: '16'},
+                { keys: ['a/5'], duration: '16'},
+                { keys: ['d/5'], duration: '32'},
                 { keys: ['b/4'], duration: '32', type: 'r' },
-                { keys: ['b/4'], duration: '32', type: 'r' },
-                { keys: ['b/4'], duration: '32', type: 'r' },
+                { keys: ['b/4'], duration: '32',},
+                { keys: ['b/4'], duration: '32',},
+                { keys: ['b/4'], duration: '32',},
                 { keys: ['b/4'], duration: '32', type: 'r' },
                 { keys: ['b/4'], duration: '32', type: 'r' },
                 { keys: ['b/4'], duration: '32', type: 'r' },

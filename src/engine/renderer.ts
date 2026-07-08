@@ -18,6 +18,12 @@ export const maxNoteFontSize = 38;
 const quarterNoteGlyph = "\uE0A4";
 const halfNoteGlyph = "\uE0A3";
 const wholeNoteGlyph = "\uE1D2"; 
+const restWholeGlyph = "\uE4E3";
+const restHalfGlyph = "\uE4E4";
+const restQuarterGlyph = "\uE4E5";  
+const rest8thGlyph = "\uE4E6";
+const rest16thGlyph = "\uE4E7";
+const rest32ndGlyph = "\uE4E8";
 
 export function calcNoteFontSize(duration: string): number {
     switch (duration) {
@@ -74,109 +80,111 @@ export function renderScore(container: HTMLDivElement, score: Score) {
 			// 
 			// Rendering logic
 			//
-
-            // Calculate variables for rendering the note
-            let flagGlyph = null;
-            let noteHeadGlyph = quarterNoteGlyph;
-            let stemDirection = Stem.UP; // or Stem.UP
-			// const noteOffset = -(((note.keys[0][0].charCodeAt(0) - 'b'.charCodeAt(0)) + ((Number(note.keys[0][2]) - 4) * 7)) * (spacingBetweenLines ) / 2);
             const semitonesAboveb4 = noteDiff(note, {keys: ['b/4'], duration: 'q'});
             const noteFontSize = calcNoteFontSize(note.duration);
-            
-            if (semitonesAboveb4 > 0){
-                stemDirection = Stem.DOWN;
-            }
 
-            switch(note.duration){
-                case('w'): noteHeadGlyph = wholeNoteGlyph; break;
-                case('h'): noteHeadGlyph = halfNoteGlyph; break;
-                case('q'): flagGlyph = null; break;
-                case('8'):
-                    flagGlyph = stemDirection === Stem.DOWN ? VexFlow.Glyphs.flag8thDown : VexFlow.Glyphs.flag8thUp;
-                    break;
-                case('16'):
-                    flagGlyph = stemDirection === Stem.DOWN ? VexFlow.Glyphs.flag16thDown : VexFlow.Glyphs.flag16thUp;
-                    break;
-                case('32'):
-                    flagGlyph = stemDirection === Stem.DOWN ? VexFlow.Glyphs.flag32ndDown : VexFlow.Glyphs.flag32ndUp;
-                    break;
-                default: flagGlyph = null; noteHeadGlyph = quarterNoteGlyph; break;
-            }
-            
-            
-            // draw the note head
-			const glyph = new Element();
-			glyph.setText(noteHeadGlyph);    
-			glyph.setFontSize(noteFontSize);            // controls the glyph's rendered size
-			glyph.setX(x);
-			glyph.setY(y - (semitonesAboveb4 * (spacingBetweenLines / 2)));
-			glyph.renderText(ctx, 0, 0);
-            
-            // draw ledger lines if the note is above or below the staff
-            // const semitonesAbovef4 = noteDiff(note, {keys: ['f/4'], duration: 'q'});
-            // const semitonesBelowe3 = -noteDiff(note, {keys: ['e/3'], duration: 'q'});
+            if (note.type === 'r'){
+                // draw the rest glyph
+                const restGlyph = new Element();
+                switch(note.duration){
+                    case('w'): restGlyph.setText(restWholeGlyph); break;
+                    case('h'): restGlyph.setText(restHalfGlyph); break;
+                    case('q'): restGlyph.setText(restQuarterGlyph); break;
+                    case('8'): restGlyph.setText(rest8thGlyph); break;
+                    case('16'): restGlyph.setText(rest16thGlyph); break;
+                    case('32'): restGlyph.setText(rest32ndGlyph); break;
+                    default: restGlyph.setText(restQuarterGlyph); break;
+                }
+                restGlyph.setFontSize(noteFontSize);
+                restGlyph.setX(x);
+                restGlyph.setY(y - (semitonesAboveb4 * (spacingBetweenLines / 2)));
+                restGlyph.renderText(ctx, 0, 0);
+            } else { // else the note is a regular note, not a rest
+                // Calculate variables for rendering the note
+                let flagGlyph = null;
+                let noteHeadGlyph = quarterNoteGlyph;
+                let stemDirection = Stem.UP; // or Stem.UP
+                // const noteOffset = -(((note.keys[0][0].charCodeAt(0) - 'b'.charCodeAt(0)) + ((Number(note.keys[0][2]) - 4) * 7)) * (spacingBetweenLines ) / 2);
+                
+                if (semitonesAboveb4 > 0){
+                    stemDirection = Stem.DOWN;
+                }
 
-            // if (semitonesAboveb4 >= 6){
-            //     for (let j = 0; j <= semitonesAboveb4 - 6; j++){
-            //         if (j % 2 === 0){
-            //             drawLedgerLine(ctx, x + (glyph.getWidth() / 2), y - ((semitonesAboveb4 - j) * (spacingBetweenLines / 2)), ledgerWidth * (noteFontSize / maxNoteFontSize));
-            //         }
-            //     }
-            // } else if (semitonesAboveb4 <= -6){
-            //     for (let j = 0; j >= semitonesAboveb4 + 6; j--){
-            //         if (j % 2 === 0){
-            //             drawLedgerLine(ctx, x + (glyph.getWidth() / 2), y - ((semitonesAboveb4 - j) * (spacingBetweenLines / 2)), ledgerWidth * (noteFontSize / maxNoteFontSize));
-            //         }
-            //     }
-            // }
+                switch(note.duration){
+                    case('w'): noteHeadGlyph = wholeNoteGlyph; break;
+                    case('h'): noteHeadGlyph = halfNoteGlyph; break;
+                    case('q'): flagGlyph = null; break;
+                    case('8'):
+                        flagGlyph = stemDirection === Stem.DOWN ? VexFlow.Glyphs.flag8thDown : VexFlow.Glyphs.flag8thUp;
+                        break;
+                    case('16'):
+                        flagGlyph = stemDirection === Stem.DOWN ? VexFlow.Glyphs.flag16thDown : VexFlow.Glyphs.flag16thUp;
+                        break;
+                    case('32'):
+                        flagGlyph = stemDirection === Stem.DOWN ? VexFlow.Glyphs.flag32ndDown : VexFlow.Glyphs.flag32ndUp;
+                        break;
+                    default: flagGlyph = null; noteHeadGlyph = quarterNoteGlyph; break;
+                }
+                
+                
+                // draw the note head
+                const glyph = new Element();
+                glyph.setText(noteHeadGlyph);    
+                glyph.setFontSize(noteFontSize);            // controls the glyph's rendered size
+                glyph.setX(x);
+                glyph.setY(y - (semitonesAboveb4 * (spacingBetweenLines / 2)));
+                glyph.renderText(ctx, 0, 0);
+                
+                // draw ledger lines if the note is above or below the staff
 
-            debugger
-            if (semitonesAboveb4 >= 6){
-                for (let j = semitonesAboveb4; j >= 6; j--){
-                    if (j % 2 === 0){
-                        drawLedgerLine(ctx, x + (glyph.getWidth() / 2), y - (j * (spacingBetweenLines / 2)), ledgerWidth * (noteFontSize / maxNoteFontSize));
+                debugger
+                if (semitonesAboveb4 >= 6){
+                    for (let j = semitonesAboveb4; j >= 6; j--){
+                        if (j % 2 === 0){
+                            drawLedgerLine(ctx, x + (glyph.getWidth() / 2), y - (j * (spacingBetweenLines / 2)), ledgerWidth * (noteFontSize / maxNoteFontSize));
+                        }
+                    }
+                } else if (semitonesAboveb4 <= -6){
+                    for (let j = semitonesAboveb4; j <= -6; j++){
+                        if (j % 2 === 0){
+                            drawLedgerLine(ctx, x + (glyph.getWidth() / 2), y - (j * (spacingBetweenLines / 2)), ledgerWidth * (noteFontSize / maxNoteFontSize));
+                        }
                     }
                 }
-            } else if (semitonesAboveb4 <= -6){
-                for (let j = semitonesAboveb4; j <= -6; j++){
-                    if (j % 2 === 0){
-                        drawLedgerLine(ctx, x + (glyph.getWidth() / 2), y - (j * (spacingBetweenLines / 2)), ledgerWidth * (noteFontSize / maxNoteFontSize));
+                
+                if (note.duration !== 'w'){
+                    // draw the stem
+                    const stemXOffset = stemDirection === Stem.UP ? glyph.getWidth() - 1 : 1; // offset the stem to the right of the notehead by half the font size
+                    let stemX = glyph.getX() + stemXOffset;
+                    const stemExtension = !!flagGlyph ? 7 : 4; // extension for flags/beams
+                    const stem = new Stem({
+                        xBegin: stemX,
+                        xEnd: stemX, // same or a straight stem; offset if you need it left/right of the head
+                        yTop: glyph.getY(), 
+                        yBottom: glyph.getY(),     
+                        stemDirection,
+                        stemExtension,
+                    });
+                    stem.setContext(ctx);
+                    stem.draw();
+
+                    // notes array is sorted from highest note to lowest note
+
+                    if (note.duration !== 'h'){
+                        // draw the flag
+                        const flag = new Flag();
+                        if (!!flagGlyph){
+                            flag.setText(flagGlyph);
+                            flag.setFontSize(noteFontSize * 0.75); // match the notehead glyph's size
+                            const { topY } = stem.getExtents(); // topY = the y at the far tip of the stem, away from the notehead
+                            flag.setX(stemX);
+                            flag.setY(topY);
+                            flag.setContext(ctx);
+                            flag.draw();
+                        }
                     }
                 }
             }
-            
-			if (note.duration !== 'w'){
-                // draw the stem
-                const stemXOffset = stemDirection === Stem.UP ? glyph.getWidth() - 1 : 1; // offset the stem to the right of the notehead by half the font size
-				let stemX = glyph.getX() + stemXOffset;
-				const stemExtension = !!flagGlyph ? 7 : 4; // extension for flags/beams
-				const stem = new Stem({
-					xBegin: stemX,
-					xEnd: stemX, // same or a straight stem; offset if you need it left/right of the head
-					yTop: glyph.getY(), 
-					yBottom: glyph.getY(),     
-					stemDirection,
-					stemExtension,
-				});
-				stem.setContext(ctx);
-				stem.draw();
-
-				// notes array is sorted from highest note to lowest note
-
-                if (note.duration !== 'h'){
-                    // draw the flag
-                    const flag = new Flag();
-                    if (!!flagGlyph){
-                        flag.setText(flagGlyph);
-                        flag.setFontSize(noteFontSize * 0.75); // match the notehead glyph's size
-                        const { topY } = stem.getExtents(); // topY = the y at the far tip of the stem, away from the notehead
-                        flag.setX(stemX);
-                        flag.setY(topY);
-                        flag.setContext(ctx);
-                        flag.draw();
-                    }
-                }
-			}
 			// 
 			// End of Rendering logic
 			//

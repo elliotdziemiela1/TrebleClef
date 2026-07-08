@@ -22,7 +22,7 @@ function getWidthOfNote(duration : Duration) : number {
 }
 
 export default function Editor() {
-		const containerRef = useRef<HTMLDivElement>(null);
+		const scoreContainerRef = useRef<HTMLDivElement>(null);
 		const [ score, setScore ] = useState<Score>(demoScore);
 		const [ selectedMeasure, setSelectedMeasure ] = useState<Measure | null>(null);
 		const [ selectedNote, setSelectedNote ] = useState<Note | null>(null);
@@ -30,9 +30,9 @@ export default function Editor() {
 		const selectNote = useCallback((event: React.MouseEvent<HTMLDivElement>) : boolean => {
 			setSelectedNote(null);
 			setSelectedMeasure(null);
-			if (!containerRef.current)
+			if (!scoreContainerRef.current)
 				return false;
-			const boundingRect = containerRef.current.getBoundingClientRect();
+			const boundingRect = scoreContainerRef.current.getBoundingClientRect();
 			const scoreLeft = boundingRect.left + staveStartX;
 			const scoreTop = boundingRect.top;
 			for (let i = 0; i < score.measures.length; i++){
@@ -55,15 +55,20 @@ export default function Editor() {
 
 
 		useEffect(() => {
-				if (containerRef.current) {
-						renderScore(containerRef.current, score);
+				if (scoreContainerRef.current) {
+						renderScore(scoreContainerRef.current, score);
 				}
 		}, [score]);
 
 
 	return (
-		<div ref={containerRef} className={styles.container} onClick={selectNote}>
-			
+		<div className={styles.container}>
+			<div className={styles['editor-controls']}>
+				
+			</div>
+			<div ref={scoreContainerRef} className={styles['score-container']} onClick={selectNote}>
+				
+			</div>
 		</div>
 	);
 }
