@@ -17,7 +17,7 @@ export default function Editor() {
 		// if changing measureNoteLocations back to a ref, you cant use it's history anymore.
 		//
 		const noteLocationsHistory = useHistory<number[][]>(measureNoteLocations, 8); // stores the history of the score for undo/redo functionality. The history size is 8.
-		const selectedNoteHistory = useHistory<number[][]>(selectedNoteIdx);
+		const selectedNoteHistory = useHistory<number[] | null>(selectedNoteIdx, 8);
 		const historyIndexRef = useRef<number>(0); 
 
 
