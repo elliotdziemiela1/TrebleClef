@@ -63,7 +63,7 @@ export var demoScore : Score = {
                 { keys: ['b/4'], duration: '32', type: 'r' },
                 { keys: ['b/4'], duration: '32', type: 'r' },
                 { keys: ['b/4'], duration: '32', type: 'r' },
-                { keys: ['b/4'], duration: '32', type: 'r' },
+                { keys: ['b/4'], duration: '32' },
                 { keys: ['b/4'], duration: '32' },
                 { keys: ['b/4'], duration: '32', type: 'r' },
                 { keys: ['b/4'], duration: '32', type: 'r' },
