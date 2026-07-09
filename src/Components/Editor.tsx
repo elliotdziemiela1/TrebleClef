@@ -1,15 +1,15 @@
 import styles from './Editor.module.scss';
-import { useRef, useEffect, useState, useCallback, useLayoutEffect, useReducer } from 'react';
+import { useRef, useEffect, useState, useCallback, useLayoutEffect, useReducer, useMemo } from 'react';
 import { calcNoteWidth, clefPadding, effectiveMeasureWidth, renderScore } from '../engine/renderer';
 import { demoScore, emptyScore, type Score, type Note, type Measure, type Duration } from '../engine/score';
 import { pixelsPerMeasureX, pixelsPerStaveY, staveStartX, staveStartY, 
 	rendererWidth, measuresPerStave, measureWidthPadding } from '../engine/renderer'; // Will use these soon
-import { useHistory } from '../custom_hooks';
+
 
 type EditorScore = { 
-	score: Score, 
-	measureNoteLocations: number[][], 
-	selectedNoteIdx: number[] | undefined
+	score: Score, // the musical score
+	measureNoteLocations: number[][], // the x locations of each note within it's effect measure 
+	selectedNoteIdx: number[] | undefined // the index of the currently selected note
 }
 
 interface EditorProps {
@@ -39,70 +39,65 @@ function getMeasureNoteXLocations(score : Score) : number[][] {
 	return measureNoteXLocations;
 }
 
+const demoMeasureNoteLocations = getMeasureNoteXLocations(demoScore);
+	
+
+//
+//
+//
 export default function Editor({ historySize } : EditorProps) {
-	// New logic
-	// combine selectedNoteIdx with score into EditorScore
-	// make EditorScore[] reducer
-	// when an edit is made (not undo/redo), push new EditorScore to front and set
-	// selected note index to 0;
+	const initialEditorScoresHistory = useMemo(() => {
+		return Array.from({length: historySize}, (i, idx) : EditorScore =>{
+			return {
+				score: structuredClone(demoScore),
+				measureNoteLocations: demoMeasureNoteLocations, // array of primitives: no need for deep copy
+				selectedNoteIdx: undefined
+			}
+		})
+	}, [])
 
-
-
+	
+	const scoreContainerRef = useRef<HTMLDivElement>(null);
+	
+	// index into history of scores. historySize-1 = latest score, 0 = oldest score.
 	const [ historyIndex, historyIndexDispatch ] = useReducer((state, action) => {
-		if (action < 0 || action >= historySize){
+		if (action < 0 || action >= historySize ){
 			console.log("history limit reached.");
 			return state;
 		} 
 		return action;
-	}, 0);
-
-	const scoreContainerRef = useRef<HTMLDivElement>(null);
-
+	}, historySize-1);
+	
 	// array for current EditorScore and it's history. First element is oldest, last is newest.
 	const [ editorScores, editorScoresReducer ] = useReducer((state : EditorScore[], action : EditorScore) => {
+		// move to newly created score frame
+		historyIndexDispatch(historySize-1); 
 		// delete oldest EditorScore, and push newest EditorScore
 		return [...state.slice(1,historySize), action];
-	}, [{ score: demoScore, measureNoteLocations: getMeasureNoteXLocations(demoScore), selectedNoteIdx: undefined}] );
-
-	// // array for current selected note and history
-	// const [ selectedNoteIdx, selectedNoteDispatch ] = useReducer((state, action : number[]) => {
-	// 	debugger
-	// 	if (!!state[historyIndex] && !!state[historyIndex].length)
-	// 		changeNoteColor(state[historyIndex], "black");
-	// 	const newState : number[][] = [...state];
-	// 	newState[historyIndex] = action;
-	// 	changeNoteColor(action, "blue");
-	// 	return newState;
-	// }, [[]] as number[][]); 
-
+	}, initialEditorScoresHistory as EditorScore[]);
+	
+	
+	
+	// deselect old node and select new node in current score
 	function changeSelectedNote(newIdx : number[]){
-		const newEditorScore : EditorScore = editorScores[historyIndex];
+		const newEditorScore : EditorScore = structuredClone(editorScores[historyIndex]);
 		if (!!newEditorScore.selectedNoteIdx?.length)
 			newEditorScore.score.measures[newEditorScore.selectedNoteIdx[0]].notes[newEditorScore.selectedNoteIdx[1]].color = "black";
 		newEditorScore.selectedNoteIdx = newIdx;
 		newEditorScore.score.measures[newIdx[0]].notes[newIdx[1]].color = "blue";
 		editorScoresReducer(newEditorScore);
 	}
-	
-	// // change color of a note in the current score
-	// function changeNoteColor(indicies : number[], color : string) {
-	// 	const newEditorScore : EditorScore = editorScores[historyIndex];
-	// 	newEditorScore.score.measures[indicies[0]].notes[indicies[1]].color = color;
-	// 	editorScoresReducer(newEditorScore);
-	// }
 
-	// delete a note  in the current score
+	// delete a note in the current score
 	function deleteNote(idx : number[]) {
-		setScore((prevScore) => {
-			const newScore = { ...prevScore };
-			newScore[historyIndex].measures[idx[0]].notes[idx[1]].type = "r";
-			newScore[historyIndex].measures[idx[0]].notes[idx[1]].keys = ["b/4"];
-			return newScore;
-		})
+		const newEditorScore : EditorScore = structuredClone(editorScores[historyIndex]);
+		newEditorScore.score.measures[idx[0]].notes[idx[1]].type = 'r';
+		newEditorScore.score.measures[idx[0]].notes[idx[1]].keys = ['b/4'];
+		editorScoresReducer(newEditorScore);
 	}
 
 	// function called when the score container is clicked. It determines which note was clicked on and updates the selectedNoteIdx state accordingly.
-	const selectNote = useCallback((event: React.MouseEvent<HTMLDivElement>) : boolean => {
+	const selectNote = (event: React.MouseEvent<HTMLDivElement>) : boolean => {
 		debugger
 		if (!scoreContainerRef.current)
 			return false;
@@ -127,7 +122,7 @@ export default function Editor({ historySize } : EditorProps) {
 			} 
 		}
 		return false;
-	}, [editorScores]);
+	}
 
 
 	// rerender score when it changes, or history index changes
@@ -147,8 +142,8 @@ export default function Editor({ historySize } : EditorProps) {
 
 	function controlButtonHandler(name : string) {
 		switch(name){
-			case("Undo"): historyIndexDispatch(historyIndex + 1); break;
-			case("Redo"): historyIndexDispatch(historyIndex - 1); break;
+			case("Undo"): historyIndexDispatch(historyIndex - 1); break;
+			case("Redo"): historyIndexDispatch(historyIndex + 1); break;
 		}
 	}
 
