@@ -12,27 +12,12 @@ interface EditorProps {
 
 export default function Editor({ historySize } : EditorProps) {
 	const scoreContainerRef = useRef<HTMLDivElement>(null);
-	const [ score, setScore ] = useState<Score>(demoScore);
-	const [ selectedNoteIdx, setSelectedNoteIdx ] = useState<number[] | null>(null);
-	const [ historyIndex, historyIndexDispatch ] = useReducer((state : number, action : number) => {
-		if (action < historySize && action >= 0){
-			// set score
-			setScore()	
-			// set selected note
-			setSelectedNoteIdx()
-		} else {
-			console.log("history limit reached.");
-		}
-	}, 0); 
+	const [ score, setScore ] = useState<Score[]>([demoScore]); // array for history
+	const [ selectedNoteIdx, setSelectedNoteIdx ] = useState<(number[] | null)[]>([null]); // array for history
+	const [ historyIndex, setHistoryIndex ] = useState<number>(0);
 
 	// stores the x locations of the notes in the selected measure.
 	const measureNoteLocations = useRef<number[][]>([]); 
-
-	// // stores the history of the score for undo/redo functionality. First entry is the latest score, last is the oldest
-	// const scoreHistory : Score[] = useHistory<Score>(score, historySize, historyIndexRef); 
-	// // stores the history of the selected note for undo/redo functionality. First entry is the latest score, last is the oldest
-	// const selectedNoteHistory : (number[] | null)[] = useHistory<number[] | null>(selectedNoteIdx, historySize, historyIndexRef);
-
 
 	// calculates the offset within the effective measure (the measure excluding padding for first and last notes) 
 	// for each note in the score. returns a 2D array where 
@@ -40,8 +25,8 @@ export default function Editor({ historySize } : EditorProps) {
 	// This function is only computed the first time a score is rendered.
 	const getMeasureNoteXLocations = useCallback(() : number[][] => {
 		let measureNoteXLocations : number[][] = [[]];
-		for (let i = 0; i < score.measures.length; i++){
-			const selectedNotes = score.measures[i].notes;
+		for (let i = 0; i < score[historyIndex].measures.length; i++){
+			const selectedNotes = score[historyIndex].measures[i].notes;
 			measureNoteXLocations[i] = [];
 			measureNoteXLocations[i][0] = -(measureWidthPadding / 2); // the leftmost pixel of the whole measure
 			if (selectedNotes.length > 1){
@@ -60,54 +45,27 @@ export default function Editor({ historySize } : EditorProps) {
 	function changeNoteColor(indicies : number[], color : string) {
 		setScore((prevScore) => {
 			const newScore = { ...prevScore };
-			newScore.measures[indicies[0]].notes[indicies[1]].color = color;
+			newScore[historyIndex].measures[indicies[0]].notes[indicies[1]].color = color;
 			return newScore;
 		});
 	}
 
-	// function undo() {
-	// 	if (historyIndex < historySize - 1){
-	// 		setHistoryIndex((prev) => {
-	// 			return prev
-	// 		})
-	// 		// set score
-	// 		setScore(scoreHistory[historyIndexRef.current])	
-	// 		// set selected note
-	// 		setSelectedNoteIdx(selectedNoteHistory[historyIndexRef.current])
-	// 	} else {
-	// 		console.log("Undo limit reached.");
-	// 	}
-	// }
-
-	// function redo() {
-	// 	if (historyIndexRef.current > 0){
-	// 		historyIndexRef.current--;
-	// 		// set score
-	// 		setScore(scoreHistory[historyIndexRef.current])			
-	// 	} else {
-	// 		console.log("Redo limit reached.");
-	// 	}
-
-	// }
-
-	// function addNote(){
-	// 	historyIndexRef.current = 0;
-
-	// }
-
 	function deleteNote(idx : number[]) {
 		setScore((prevScore) => {
 			const newScore = { ...prevScore };
-			newScore.measures[idx[0]].notes[idx[1]].type = "r";
-			newScore.measures[idx[0]].notes[idx[1]].keys = ["b/4"];
+			newScore[historyIndex].measures[idx[0]].notes[idx[1]].type = "r";
+			newScore[historyIndex].measures[idx[0]].notes[idx[1]].keys = ["b/4"];
 			return newScore;
 		})
 	}
 
 	function changeSelectedNote(newIdx : number[]){
-		if (!!selectedNoteIdx?.length)
-			changeNoteColor(selectedNoteIdx, "black");
-		setSelectedNoteIdx([newIdx[0], newIdx[1]]);
+		if (!!selectedNoteIdx[historyIndex])
+			changeNoteColor(selectedNoteIdx[historyIndex], "black");
+		const newSelectedNoteIdx = [...selectedNoteIdx];
+		newSelectedNoteIdx[historyIndex] = newIdx;
+		setSelectedNoteIdx(newSelectedNoteIdx);
+		// debugger
 		changeNoteColor([newIdx[0], newIdx[1]], "blue");
 	}
 
@@ -118,7 +76,7 @@ export default function Editor({ historySize } : EditorProps) {
 		const boundingRect = scoreContainerRef.current.getBoundingClientRect();
 		const scoreLeft = boundingRect.left + staveStartX + 7; // 7 is a fudge factor to account for the clef and stave padding
 		const scoreTop = boundingRect.top;
-		for (let i = 0; i < score.measures.length; i++){
+		for (let i = 0; i < score[historyIndex].measures.length; i++){
 			const measureLeft = scoreLeft + clefPadding + (i%4 * pixelsPerMeasureX);
 			const measureRight = measureLeft + pixelsPerMeasureX;
 			const effectiveMeasureLeft = measureLeft + measureWidthPadding / 2;
@@ -141,31 +99,23 @@ export default function Editor({ historySize } : EditorProps) {
 
 	useLayoutEffect(() => {
 			if (scoreContainerRef.current) {
-				renderScore(scoreContainerRef.current, score);
+				renderScore(scoreContainerRef.current, score[historyIndex]);
 				measureNoteLocations.current = getMeasureNoteXLocations();
 			}
 	}, [score]);
 
-	// useEffect(() => {
-	// 	const listener = (event : KeyboardEvent) => {
-	// 		if (event.key == "Backspace" && !!selectedNoteIdx?.length) 
-	// 			changeNoteColor(selectedNoteIdx, "black");
-	// 	};
-	// 	window.addEventListener("keydown", listener);
-	// 	return () => window.removeEventListener("keydown", listener);
-	// }, [selectedNoteIdx]);
-
 	const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
 		if (event.key == "Backspace" && !!selectedNoteIdx?.length) {
 			// changeNoteColor(selectedNoteIdx, "black");
-			deleteNote(selectedNoteIdx);
+			if (!!selectedNoteIdx[historyIndex])
+				deleteNote(selectedNoteIdx[historyIndex]);
 		}
 	}
 
 	function controlButtonHandler(name : string) {
 		switch(name){
-			case("Undo"): undo(); break;
-			case("Redo"): redo(); break;
+			case("Undo"): setHistoryIndex(historyIndex + 1); break;
+			case("Redo"): setHistoryIndex(historyIndex - 1); break;
 		}
 	}
 
