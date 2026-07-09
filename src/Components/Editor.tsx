@@ -11,10 +11,18 @@ interface EditorProps {
 }
 
 export default function Editor({ historySize } : EditorProps) {
+	const [ historyIndex, setHistoryIndex ] = useState<number>(0);
 	const scoreContainerRef = useRef<HTMLDivElement>(null);
 	const [ score, setScore ] = useState<Score[]>([demoScore]); // array for history
-	const [ selectedNoteIdx, setSelectedNoteIdx ] = useState<(number[] | null)[]>([null]); // array for history
-	const [ historyIndex, setHistoryIndex ] = useState<number>(0);
+	const [ selectedNoteIdx, selectedNoteDispatch ] = useReducer((state, action : number[]) => {
+		debugger
+		if (!!state[historyIndex].length)
+			changeNoteColor(state[historyIndex], "black");
+		const newState : number[][] = [...state];
+		newState[historyIndex] = action;
+		changeNoteColor(action, "blue");
+		return newState;
+	}, [[]] as number[][]); // array for history
 
 	// stores the x locations of the notes in the selected measure.
 	const measureNoteLocations = useRef<number[][]>([]); 
@@ -59,18 +67,19 @@ export default function Editor({ historySize } : EditorProps) {
 		})
 	}
 
-	function changeSelectedNote(newIdx : number[]){
-		if (!!selectedNoteIdx[historyIndex])
-			changeNoteColor(selectedNoteIdx[historyIndex], "black");
-		const newSelectedNoteIdx = [...selectedNoteIdx];
-		newSelectedNoteIdx[historyIndex] = newIdx;
-		setSelectedNoteIdx(newSelectedNoteIdx);
-		// debugger
-		changeNoteColor([newIdx[0], newIdx[1]], "blue");
-	}
+	// function changeSelectedNote(newIdx : number[]){
+	// 	if (!!selectedNoteIdx[historyIndex])
+	// 		changeNoteColor(selectedNoteIdx[historyIndex], "black");
+	// 	const newSelectedNoteIdx = [...selectedNoteIdx];
+	// 	newSelectedNoteIdx[historyIndex] = newIdx;
+	// 	setSelectedNoteIdx(newSelectedNoteIdx);
+	// 	// debugger
+	// 	changeNoteColor([newIdx[0], newIdx[1]], "blue");
+	// }
 
 	// function called when the score container is clicked. It determines which note was clicked on and updates the selectedNoteIdx state accordingly.
 	const selectNote = useCallback((event: React.MouseEvent<HTMLDivElement>) : boolean => {
+		debugger
 		if (!scoreContainerRef.current)
 			return false;
 		const boundingRect = scoreContainerRef.current.getBoundingClientRect();
@@ -87,7 +96,7 @@ export default function Editor({ historySize } : EditorProps) {
 				// find the note that was clicked on
 				for (let j = measureNoteLocations.current[i].length - 1; j >= 0; j--){
 					if (event.clientX - effectiveMeasureLeft > measureNoteLocations.current[i][j]) {
-						changeSelectedNote([i,j]);
+						selectedNoteDispatch([i,j]);
 						return true;
 					}
 				}
