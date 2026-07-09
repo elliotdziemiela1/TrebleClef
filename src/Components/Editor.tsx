@@ -1,5 +1,5 @@
 import styles from './Editor.module.scss';
-import { useRef, useEffect, useState, useCallback, useLayoutEffect } from 'react';
+import { useRef, useEffect, useState, useCallback, useLayoutEffect, useReducer } from 'react';
 import { calcNoteWidth, clefPadding, effectiveMeasureWidth, renderScore } from '../engine/renderer';
 import { demoScore, emptyScore, type Score, type Note, type Measure, type Duration } from '../engine/score';
 import { pixelsPerMeasureX, pixelsPerStaveY, staveStartX, staveStartY, 
@@ -14,10 +14,24 @@ export default function Editor({ historySize } : EditorProps) {
 	const scoreContainerRef = useRef<HTMLDivElement>(null);
 	const [ score, setScore ] = useState<Score>(demoScore);
 	const [ selectedNoteIdx, setSelectedNoteIdx ] = useState<number[] | null>(null);
-	const measureNoteLocations = useRef<number[][][]>([]); // stores the x locations of the notes in the selected measure. Holds a history of historySize.
-	const scoreHistory = useHistory<Score>(score, historySize); // stores the history of the score for undo/redo functionality. 
-	const selectedNoteHistory = useHistory<number[] | null>(selectedNoteIdx, historySize);
-	const historyIndexRef = useRef<number>(0); 
+	const [ historyIndex, historyIndexDispatch ] = useReducer((state : number, action : number) => {
+		if (action < historySize && action >= 0){
+			// set score
+			setScore()	
+			// set selected note
+			setSelectedNoteIdx()
+		} else {
+			console.log("history limit reached.");
+		}
+	}, 0); 
+
+	// stores the x locations of the notes in the selected measure.
+	const measureNoteLocations = useRef<number[][]>([]); 
+
+	// // stores the history of the score for undo/redo functionality. First entry is the latest score, last is the oldest
+	// const scoreHistory : Score[] = useHistory<Score>(score, historySize, historyIndexRef); 
+	// // stores the history of the selected note for undo/redo functionality. First entry is the latest score, last is the oldest
+	// const selectedNoteHistory : (number[] | null)[] = useHistory<number[] | null>(selectedNoteIdx, historySize, historyIndexRef);
 
 
 	// calculates the offset within the effective measure (the measure excluding padding for first and last notes) 
@@ -51,30 +65,54 @@ export default function Editor({ historySize } : EditorProps) {
 		});
 	}
 
-	function undo() {
+	// function undo() {
+	// 	if (historyIndex < historySize - 1){
+	// 		setHistoryIndex((prev) => {
+	// 			return prev
+	// 		})
+	// 		// set score
+	// 		setScore(scoreHistory[historyIndexRef.current])	
+	// 		// set selected note
+	// 		setSelectedNoteIdx(selectedNoteHistory[historyIndexRef.current])
+	// 	} else {
+	// 		console.log("Undo limit reached.");
+	// 	}
+	// }
 
-	}
+	// function redo() {
+	// 	if (historyIndexRef.current > 0){
+	// 		historyIndexRef.current--;
+	// 		// set score
+	// 		setScore(scoreHistory[historyIndexRef.current])			
+	// 	} else {
+	// 		console.log("Redo limit reached.");
+	// 	}
+
+	// }
+
+	// function addNote(){
+	// 	historyIndexRef.current = 0;
+
+	// }
 
 	function deleteNote(idx : number[]) {
 		setScore((prevScore) => {
 			const newScore = { ...prevScore };
-			// const noteToDelete : Note = newScore.measures[idx[0]].notes[idx[1]];
-			// switch(noteToDelete.duration){
-			// 	case('w'):
-
-			// 		break;
-			// }
 			newScore.measures[idx[0]].notes[idx[1]].type = "r";
 			newScore.measures[idx[0]].notes[idx[1]].keys = ["b/4"];
 			return newScore;
 		})
 	}
 
-	// function called when the score container is clicked. It determines which note was clicked on and updates the selectedNoteIdx state accordingly.
-	const selectNote = useCallback((event: React.MouseEvent<HTMLDivElement>) : boolean => {
+	function changeSelectedNote(newIdx : number[]){
 		if (!!selectedNoteIdx?.length)
 			changeNoteColor(selectedNoteIdx, "black");
+		setSelectedNoteIdx([newIdx[0], newIdx[1]]);
+		changeNoteColor([newIdx[0], newIdx[1]], "blue");
+	}
 
+	// function called when the score container is clicked. It determines which note was clicked on and updates the selectedNoteIdx state accordingly.
+	const selectNote = useCallback((event: React.MouseEvent<HTMLDivElement>) : boolean => {
 		if (!scoreContainerRef.current)
 			return false;
 		const boundingRect = scoreContainerRef.current.getBoundingClientRect();
@@ -89,10 +127,9 @@ export default function Editor({ historySize } : EditorProps) {
 			// if clicked inside of this measure
 			if (event.clientX > measureLeft && event.clientX < measureRight && event.clientY > measureTop && event.clientY < measureBottom){
 				// find the note that was clicked on
-				for (let j = measureNoteLocations.current[0][i].length - 1; j >= 0; j--){
-					if (event.clientX - effectiveMeasureLeft > measureNoteLocations.current[0][i][j]) {
-						setSelectedNoteIdx([i, j]);
-						changeNoteColor([i,j], "blue");
+				for (let j = measureNoteLocations.current[i].length - 1; j >= 0; j--){
+					if (event.clientX - effectiveMeasureLeft > measureNoteLocations.current[i][j]) {
+						changeSelectedNote([i,j]);
 						return true;
 					}
 				}
@@ -105,12 +142,7 @@ export default function Editor({ historySize } : EditorProps) {
 	useLayoutEffect(() => {
 			if (scoreContainerRef.current) {
 				renderScore(scoreContainerRef.current, score);
-				if (measureNoteLocations.current.length === 0) {
-					measureNoteLocations.current = [...measureNoteLocations.current, getMeasureNoteXLocations()];
-					if (measureNoteLocations.current.length > historySize) {
-						measureNoteLocations.current.pop();
-					}
-				}
+				measureNoteLocations.current = getMeasureNoteXLocations();
 			}
 	}, [score]);
 
@@ -123,16 +155,23 @@ export default function Editor({ historySize } : EditorProps) {
 	// 	return () => window.removeEventListener("keydown", listener);
 	// }, [selectedNoteIdx]);
 
-	const pressDelete = (event: React.KeyboardEvent<HTMLDivElement>) => {
+	const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
 		if (event.key == "Backspace" && !!selectedNoteIdx?.length) {
 			// changeNoteColor(selectedNoteIdx, "black");
 			deleteNote(selectedNoteIdx);
 		}
 	}
 
+	function controlButtonHandler(name : string) {
+		switch(name){
+			case("Undo"): undo(); break;
+			case("Redo"): redo(); break;
+		}
+	}
+
 	return (
-		<div className={styles.container} onKeyDown={pressDelete} tabIndex={0}>
-			<EditorControls />
+		<div className={styles.container} onKeyDown={handleKeyDown} tabIndex={0}>
+			<EditorControls buttonPressCallback={controlButtonHandler}/>
 			<div ref={scoreContainerRef} className={styles['score-container']} onClick={selectNote}>
 				
 			</div>
@@ -140,13 +179,17 @@ export default function Editor({ historySize } : EditorProps) {
 	);
 }
 
-function EditorControls() {
+interface EditorControlsProps {
+	buttonPressCallback: (name : string) => void;
+}
+
+function EditorControls({ buttonPressCallback } : EditorControlsProps) {
 	return (
 		<div className={styles['editor-controls']}>
-			<button>Undo</button>
-			<button>Redo</button>
-			<button>Save</button>
-			<button>Load</button>
+			<button onClick={() => buttonPressCallback("Undo")}>Undo</button>
+			<button onClick={() => buttonPressCallback("Redo")}>Redo</button>
+			<button onClick={() => buttonPressCallback("Save")}>Save</button>
+			<button onClick={() => buttonPressCallback("Load")}>Load</button>
 		</div>
 	);
 }
