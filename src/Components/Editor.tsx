@@ -6,18 +6,17 @@ import { pixelsPerMeasureX, pixelsPerStaveY, staveStartX, staveStartY,
 	rendererWidth, measuresPerStave, measureWidthPadding } from '../engine/renderer'; // Will use these soon
 import { useHistory } from '../custom_hooks';
 
-export default function Editor() {
+interface EditorProps {
+	historySize : number
+}
+
+export default function Editor({ historySize } : EditorProps) {
 		const scoreContainerRef = useRef<HTMLDivElement>(null);
 		const [ score, setScore ] = useState<Score>(demoScore);
 		const [ selectedNoteIdx, setSelectedNoteIdx ] = useState<number[] | null>(null);
-		const [ measureNoteLocations, setMeasureNoteLocations ] = useState<number[][]>([]); // stores the x locations of the notes in the selected measure
-		const scoreHistory = useHistory<Score>(score, 8); // stores the history of the score for undo/redo functionality. The history size is 8.
-		// TODO 
-		// 
-		// if changing measureNoteLocations back to a ref, you cant use it's history anymore.
-		//
-		const noteLocationsHistory = useHistory<number[][]>(measureNoteLocations, 8); // stores the history of the score for undo/redo functionality. The history size is 8.
-		const selectedNoteHistory = useHistory<number[] | null>(selectedNoteIdx, 8);
+		const measureNoteLocations = useRef<number[][][]>([]); // stores the x locations of the notes in the selected measure. Holds a history of historySize.
+		const scoreHistory = useHistory<Score>(score, historySize); // stores the history of the score for undo/redo functionality. 
+		const selectedNoteHistory = useHistory<number[] | null>(selectedNoteIdx, historySize);
 		const historyIndexRef = useRef<number>(0); 
 
 
@@ -44,10 +43,10 @@ export default function Editor() {
 			return measureNoteXLocations;
 		}, [score]);
 
-		function unselectNote() {
+		function changeNoteColor(indicies : number[], color : string) {
 			setScore((prevScore) => {
 				const newScore = { ...prevScore };
-				newScore.measures[selectedNoteIdx?.[0] ?? 0].notes[selectedNoteIdx?.[1] ?? 0].color = "black";
+				newScore.measures[indicies[0]].notes[indicies[1]].color = color;
 				return newScore;
 			});
 		}
@@ -56,9 +55,16 @@ export default function Editor() {
 
 		}
 
+		function deleteNote() {
+			if (!!selectedNoteIdx){
+				const noteToDelete : number[] = selectedNoteIdx;
+			}
+		}
+
 		// function called when the score container is clicked. It determines which note was clicked on and updates the selectedNoteIdx state accordingly.
 		const selectNote = useCallback((event: React.MouseEvent<HTMLDivElement>) : boolean => {
-			unselectNote();
+			if (!!selectedNoteIdx?.length)
+				changeNoteColor(selectedNoteIdx, "black");
 
 			if (!scoreContainerRef.current)
 				return false;
@@ -72,12 +78,12 @@ export default function Editor() {
 				const measureTop = scoreTop + Math.floor(i/4) * pixelsPerStaveY; 
 				const measureBottom = measureTop + pixelsPerStaveY;
 				// if clicked inside of this measure
-				debugger
 				if (event.clientX > measureLeft && event.clientX < measureRight && event.clientY > measureTop && event.clientY < measureBottom){
 					// find the note that was clicked on
-					for (let j = measureNoteLocations[i].length - 1; j >= 0; j--){
-						if (event.clientX - effectiveMeasureLeft > measureNoteLocations[i][j]) {
+					for (let j = measureNoteLocations.current[0][i].length - 1; j >= 0; j--){
+						if (event.clientX - effectiveMeasureLeft > measureNoteLocations.current[0][i][j]) {
 							setSelectedNoteIdx([i, j]);
+							changeNoteColor([i,j], "blue");
 							return true;
 						}
 					}
@@ -86,30 +92,24 @@ export default function Editor() {
 			return false;
 		}, [score]);
 
-		useEffect(() => {
-			
-			setScore((prevScore) => {
-				const newScore = { ...prevScore };
-				if (selectedNoteIdx) {
-					newScore.measures[selectedNoteIdx[0]].notes[selectedNoteIdx[1]].color = "blue";
-				}
-				return newScore;
-			});
-		}, [selectedNoteIdx]);
-
 
 		useLayoutEffect(() => {
 				if (scoreContainerRef.current) {
 					renderScore(scoreContainerRef.current, score);
-					if (measureNoteLocations.length === 0) {
-						setMeasureNoteLocations(getMeasureNoteXLocations());
+					if (measureNoteLocations.current.length === 0) {
+						measureNoteLocations.current = [...measureNoteLocations.current, getMeasureNoteXLocations()];
+						if (measureNoteLocations.current.length > historySize) {
+							measureNoteLocations.current.pop();
+						}
 					}
 				}
 		}, [score]);
 
 
 	return (
-		<div className={styles.container}>
+		<div className={styles.container} onKeyDown={(event) => {
+				if (event.key == "backspace" && !!selectedNoteIdx?.length) changeNoteColor(selectedNoteIdx, "black");}
+			}>
 			<EditorControls />
 			<div ref={scoreContainerRef} className={styles['score-container']} onClick={selectNote}>
 				

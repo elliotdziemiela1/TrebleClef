@@ -6,7 +6,7 @@ export default function EditorPage() {
         <div className={styles.container}>
             <h1 className={styles.title}>Welcome to the Editor Page</h1>
             <p className={styles.description}>This is where you can create and edit scores.</p>
-            <Editor/>
+            <Editor historySize={8} />
         </div>
     )
 }
