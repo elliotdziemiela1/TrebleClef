@@ -55,10 +55,19 @@ export default function Editor({ historySize } : EditorProps) {
 
 	}
 
-	function deleteNote() {
-		if (!!selectedNoteIdx){
-			const noteToDelete : number[] = selectedNoteIdx;
-		}
+	function deleteNote(idx : number[]) {
+		setScore((prevScore) => {
+			const newScore = { ...prevScore };
+			// const noteToDelete : Note = newScore.measures[idx[0]].notes[idx[1]];
+			// switch(noteToDelete.duration){
+			// 	case('w'):
+
+			// 		break;
+			// }
+			newScore.measures[idx[0]].notes[idx[1]].type = "r";
+			newScore.measures[idx[0]].notes[idx[1]].keys = ["b/4"];
+			return newScore;
+		})
 	}
 
 	// function called when the score container is clicked. It determines which note was clicked on and updates the selectedNoteIdx state accordingly.
@@ -115,8 +124,10 @@ export default function Editor({ historySize } : EditorProps) {
 	// }, [selectedNoteIdx]);
 
 	const pressDelete = (event: React.KeyboardEvent<HTMLDivElement>) => {
-		if (event.key == "Backspace" && !!selectedNoteIdx?.length) 
-			changeNoteColor(selectedNoteIdx, "black");
+		if (event.key == "Backspace" && !!selectedNoteIdx?.length) {
+			// changeNoteColor(selectedNoteIdx, "black");
+			deleteNote(selectedNoteIdx);
+		}
 	}
 
 	return (
