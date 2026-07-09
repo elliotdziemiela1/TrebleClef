@@ -11,12 +11,18 @@ interface EditorProps {
 }
 
 export default function Editor({ historySize } : EditorProps) {
-	const [ historyIndex, setHistoryIndex ] = useState<number>(0);
+	const [ historyIndex, historyIndexDispatch ] = useReducer((state, action) => {
+		if (action < 0 || action >= historySize){
+			console.log("history limit reached.");
+			return state;
+		} 
+		return action;
+	}, 0);
 	const scoreContainerRef = useRef<HTMLDivElement>(null);
 	const [ score, setScore ] = useState<Score[]>([demoScore]); // array for history
 	const [ selectedNoteIdx, selectedNoteDispatch ] = useReducer((state, action : number[]) => {
 		debugger
-		if (!!state[historyIndex].length)
+		if (!!state[historyIndex] && !!state[historyIndex].length)
 			changeNoteColor(state[historyIndex], "black");
 		const newState : number[][] = [...state];
 		newState[historyIndex] = action;
@@ -67,16 +73,6 @@ export default function Editor({ historySize } : EditorProps) {
 		})
 	}
 
-	// function changeSelectedNote(newIdx : number[]){
-	// 	if (!!selectedNoteIdx[historyIndex])
-	// 		changeNoteColor(selectedNoteIdx[historyIndex], "black");
-	// 	const newSelectedNoteIdx = [...selectedNoteIdx];
-	// 	newSelectedNoteIdx[historyIndex] = newIdx;
-	// 	setSelectedNoteIdx(newSelectedNoteIdx);
-	// 	// debugger
-	// 	changeNoteColor([newIdx[0], newIdx[1]], "blue");
-	// }
-
 	// function called when the score container is clicked. It determines which note was clicked on and updates the selectedNoteIdx state accordingly.
 	const selectNote = useCallback((event: React.MouseEvent<HTMLDivElement>) : boolean => {
 		debugger
@@ -123,8 +119,8 @@ export default function Editor({ historySize } : EditorProps) {
 
 	function controlButtonHandler(name : string) {
 		switch(name){
-			case("Undo"): setHistoryIndex(historyIndex + 1); break;
-			case("Redo"): setHistoryIndex(historyIndex - 1); break;
+			case("Undo"): historyIndexDispatch(historyIndex + 1); break;
+			case("Redo"): historyIndexDispatch(historyIndex - 1); break;
 		}
 	}
 
