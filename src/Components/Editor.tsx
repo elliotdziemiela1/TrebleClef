@@ -97,6 +97,17 @@ export default function Editor({ historySize } : EditorProps) {
 		editorScoresReducer({ newScore: newEditorScore, useHistory: false });
 	}
 
+	// when a note is selected, when the mouse hovers over the staff above and below the selected note, it should show new
+	// note previews.
+	function hoverNote(key : string){
+		const newEditorScore : EditorScore = structuredClone(editorScores[historyIndex]);
+		if (!newEditorScore.selectedNoteIdx?.length)
+			return;
+		newEditorScore[historyIndex].score.measures[newEditorScore.selectedNoteIdx[0]]
+			.notes[newEditorScore.selectedNoteIdx[1]].keys[1] = key;
+		editorScoresReducer({ newScore: newEditorScore, useHistory: false });
+	}
+
 	// delete a note in the current score
 	function deleteNote(idx : number[]) {
 		const newEditorScore : EditorScore = structuredClone(editorScores[historyIndex]);

@@ -92,7 +92,6 @@ export function renderScore(container: HTMLDivElement, score: Score) {
                 // 
                 // Rendering logic
                 //
-                // const semitonesAboveb4 = noteDiff(note, {keys: ['b/4'], duration: 'q'});
                 const semitonesAboveb4 = keyDiff(key, 'b/4');
                 const noteFontSize = calcNoteFontSize(note.duration);
                 if (note.color){
