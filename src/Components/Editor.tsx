@@ -69,19 +69,11 @@ export default function Editor({ historySize } : EditorProps) {
 	}, historySize-1);
 	
 	// array for current EditorScore and it's history. First element is oldest, last is newest.
-	const [ editorScores, editorScoresReducer ] = useReducer((state : EditorScore[], action : { newScore : EditorScore, useHistory: boolean}) => {
-		if (action.useHistory){ // if we wan't to create a history entry for current state before updating it
-			// move to newly created score frame
-			historyIndexDispatch(historySize-1); 
-			// delete oldest EditorScore, and push newest EditorScore
-			return [...state.slice(1,historySize), action.newScore];
-		} else { // else we just update the current state in place
-			historyIndexDispatch(historySize-1); 
-			const stateCopy = [...state];
-			stateCopy[historySize-1] = action.newScore;
-			return stateCopy;
-			
-		}
+	const [ editorScores, editorScoresReducer ] = useReducer((state : EditorScore[], action : EditorScore) => {
+		// move to newly created score frame
+		historyIndexDispatch(historySize-1); 
+		// delete oldest EditorScore, and push newest EditorScore
+		return [...state.slice(1,historySize), action];
 	}, initialEditorScoresHistory as EditorScore[]);
 	
 	
@@ -93,7 +85,7 @@ export default function Editor({ historySize } : EditorProps) {
 			newEditorScore.score.measures[newEditorScore.selectedNoteIdx[0]].notes[newEditorScore.selectedNoteIdx[1]].color = "black";
 		newEditorScore.selectedNoteIdx = newIdx;
 		newEditorScore.score.measures[newIdx[0]].notes[newIdx[1]].color = "blue";
-		editorScoresReducer({ newScore: newEditorScore, useHistory: true });
+		editorScoresReducer(newEditorScore);
 	}
 
 	// delete a note in the current score
@@ -101,7 +93,7 @@ export default function Editor({ historySize } : EditorProps) {
 		const newEditorScore : EditorScore = structuredClone(editorScores[historyIndex]);
 		newEditorScore.score.measures[idx[0]].notes[idx[1]].type = 'r';
 		newEditorScore.score.measures[idx[0]].notes[idx[1]].keys = ['b/4'];
-		editorScoresReducer({ newScore: newEditorScore, useHistory: true });
+		editorScoresReducer(newEditorScore);
 	}
 
 	// function called when the score container is clicked. It determines which note was clicked on and updates the selectedNoteIdx state accordingly.
