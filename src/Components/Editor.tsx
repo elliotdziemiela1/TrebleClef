@@ -18,6 +18,7 @@ interface EditorProps {
 
 const noteNames = ['a','b','c','d','e','f','g']
 const octaveLevels = [3,4,5,6]
+const fourRests : Note[] = new Array(4).fill({ keys: ['b/4'], duration: 'q', type: 'r' });
 
 const MAX_MEASURES = 200; // maximum number of measures allowed in a score
 
@@ -175,9 +176,9 @@ export default function Editor({ historySize } : EditorProps) {
 				break;
 			case("measures"):
 				const newEditorScore : EditorScore = structuredClone(editorScores[historyIndex]);
-				if (name == "+")
-					newEditorScore.score.measures.push({notes: []});
-				else if (name == "-")
+				if (name == "+" && newEditorScore.score.measures.length < MAX_MEASURES)
+					newEditorScore.score.measures.push({notes: [...fourRests]});
+				else if (name == "-" && newEditorScore.score.measures.length > 1)
 					newEditorScore.score.measures.pop();
 				editorScoresReducer(newEditorScore);
 				break;
