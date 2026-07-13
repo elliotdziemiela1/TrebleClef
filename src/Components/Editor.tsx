@@ -17,7 +17,7 @@ interface EditorProps {
 }
 
 const noteNames = ['a','b','c','d','e','f','g']
-const octaveLevels = [1,2,3,4,5,6]
+const octaveLevels = [3,4,5,6]
 
 // calculates the offset within the effective measure (the measure excluding padding for first and last notes) 
 // for each note in the score. returns a 2D array where 
@@ -149,6 +149,7 @@ export default function Editor({ historySize } : EditorProps) {
 	}
 
 	function controlButtonHandler(name : string, catagory : string) {
+		let currentKey : string;
 		switch(catagory){
 			case("control"):
 				switch(name){
@@ -157,13 +158,14 @@ export default function Editor({ historySize } : EditorProps) {
 				}
 				break;
 			case("pitch"):
-				let currentKey : string = editorScores[historyIndex].score.measures[editorScores[historyIndex].selectedNoteIdx[0]].notes[editorScores[historyIndex].selectedNoteIdx[1]].keys[0];
-				debugger
+				currentKey = editorScores[historyIndex].score.measures[editorScores[historyIndex].selectedNoteIdx[0]].notes[editorScores[historyIndex].selectedNoteIdx[1]].keys[0];
 				currentKey = name + currentKey.slice(1,3);
 				changeNote(editorScores[historyIndex].selectedNoteIdx, currentKey)
 				break;
 			case("octave"):
-
+				currentKey = editorScores[historyIndex].score.measures[editorScores[historyIndex].selectedNoteIdx[0]].notes[editorScores[historyIndex].selectedNoteIdx[1]].keys[0];
+				currentKey = currentKey.slice(0,2) + name;
+				changeNote(editorScores[historyIndex].selectedNoteIdx, currentKey)
 				break;
 		}
 		
