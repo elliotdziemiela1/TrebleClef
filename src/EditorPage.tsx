@@ -1,7 +1,7 @@
 import Editor from './Components/Editor';
 import styles from './EditorPage.module.scss';
 
-const historySize = 8;
+export const historySize = 8;
 
 export default function EditorPage() {
     return (

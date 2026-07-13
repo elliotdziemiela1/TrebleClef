@@ -4,7 +4,7 @@ import { calcNoteWidth, clefPadding, effectiveMeasureWidth, renderScore } from '
 import { demoScore, emptyScore, type Score, type Note, type Measure, type Duration } from '../engine/score';
 import { pixelsPerMeasureX, pixelsPerStaveY, staveStartX, staveStartY, 
 	rendererWidth, measuresPerStave, measureWidthPadding } from '../engine/renderer'; // Will use these soon
-
+import { historySize } from '../EditorPage';
 
 type EditorScore = { 
 	score: Score, // the musical score
@@ -15,6 +15,10 @@ type EditorScore = {
 interface EditorProps {
 	historySize : number
 }
+
+const noteNames = ['a','b','c','d','e','f','g']
+const octaveLevels = [1,2,3,4,5,6]
+
 
 // calculates the offset within the effective measure (the measure excluding padding for first and last notes) 
 // for each note in the score. returns a 2D array where 
@@ -40,7 +44,6 @@ function getMeasureNoteXLocations(score : Score) : number[][] {
 }
 
 const demoMeasureNoteLocations = getMeasureNoteXLocations(demoScore);
-	
 
 //
 //
@@ -49,7 +52,7 @@ export default function Editor({ historySize } : EditorProps) {
 	const initialEditorScoresHistory = useMemo(() => {
 		return Array.from({length: historySize}, (i, idx) : EditorScore =>{
 			return {
-				score: structuredClone(demoScore),
+				score: demoScore,
 				measureNoteLocations: demoMeasureNoteLocations, // array of primitives: no need for deep copy
 				selectedNoteIdx: undefined
 			}
@@ -98,7 +101,6 @@ export default function Editor({ historySize } : EditorProps) {
 
 	// function called when the score container is clicked. It determines which note was clicked on and updates the selectedNoteIdx state accordingly.
 	const selectNote = (event: React.MouseEvent<HTMLDivElement>) : boolean => {
-		debugger
 		if (!scoreContainerRef.current)
 			return false;
 		const boundingRect = scoreContainerRef.current.getBoundingClientRect();
@@ -124,6 +126,11 @@ export default function Editor({ historySize } : EditorProps) {
 		return false;
 	}
 
+	// changes the key (note and pitch) of currently selected note
+	function changeKey(newKey : string, position: number[] = editorScores[historyIndex].selectedNoteIdx){
+		const newEditorScores = { ...editorScores[historyIndex] } // shallow copy 
+		editorScores[historyIndex].score.measures[position[0]].notes[position[1]].keys[0] = newKey
+	}
 
 	// rerender score when it changes, or history index changes
 	useLayoutEffect(() => {
@@ -140,16 +147,18 @@ export default function Editor({ historySize } : EditorProps) {
 		}
 	}
 
-	function controlButtonHandler(name : string) {
+	const controlButtonHandler = useCallback((name : string) => {
 		switch(name){
 			case("Undo"): historyIndexDispatch(historyIndex - 1); break;
 			case("Redo"): historyIndexDispatch(historyIndex + 1); break;
+			case("A"): console.log("You pressed A"); break;
+			default: console.log("Unhandled control button clicked.")
 		}
-	}
+	}, [])
 
 	return (
 		<div className={styles.container} onKeyDown={handleKeyDown} tabIndex={0}>
-			<EditorControls buttonPressCallback={controlButtonHandler}/>
+			<EditorControls buttonPressCallback={controlButtonHandler} editorScore={editorScores[historyIndex]} historyIndex={historyIndex}/>
 			<div ref={scoreContainerRef} className={styles['score-container']} onClick={selectNote}>
 				
 			</div>
@@ -158,16 +167,33 @@ export default function Editor({ historySize } : EditorProps) {
 }
 
 interface EditorControlsProps {
-	buttonPressCallback: (name : string) => void;
+	buttonPressCallback: (name : string) => void,
+	editorScore: EditorScore,
+	historyIndex: number
 }
 
-function EditorControls({ buttonPressCallback } : EditorControlsProps) {
+function EditorControls({ buttonPressCallback, editorScore, historyIndex} : EditorControlsProps) {
 	return (
 		<div className={styles['editor-controls']}>
-			<button onClick={() => buttonPressCallback("Undo")}>Undo</button>
-			<button onClick={() => buttonPressCallback("Redo")}>Redo</button>
-			<button onClick={() => buttonPressCallback("Save")}>Save</button>
-			<button onClick={() => buttonPressCallback("Load")}>Load</button>
+			<div className='history-and-file-buttons'>
+				<button onClick={() => buttonPressCallback("Undo")} disabled={historyIndex == 0}>Undo</button>
+				<button onClick={() => buttonPressCallback("Redo")} disabled={historyIndex == historySize - 1}>Redo</button>
+				<button onClick={() => buttonPressCallback("Save")}>Save</button>
+				<button onClick={() => buttonPressCallback("Load")}>Load</button>
+			</div>
+			<div className={styles['note-change-buttons']}>
+				<p>Pitch: </p>
+				{noteNames.map((name : string, idx : number) => {
+					return (<button key={idx} onClick={() => buttonPressCallback(name)} disabled={ !!editorScore.selectedNoteIdx?.length &&
+					(editorScore.score.measures[editorScore.selectedNoteIdx[0]].notes[editorScore.selectedNoteIdx[1]].keys[0][0] == name)}>{name}</button>)
+				})}
+				<p>Octave: </p>
+				{octaveLevels.map((num : number, idx : number) => {
+					return (<button key={idx} onClick={() => buttonPressCallback(num.toString())} disabled={ !!editorScore.selectedNoteIdx?.length &&
+					editorScore.score.measures[editorScore.selectedNoteIdx[0]].notes[editorScore.selectedNoteIdx[1]].keys[0][2] == num.toString()}>{num}</button>)
+				})}						
+
+			</div>
 		</div>
 	);
 }

@@ -5,3 +5,13 @@
         outline: none;
     }
 }
+
+.editor-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    .note-change-buttons > * {
+        display: inline;
+    }
+
+}
