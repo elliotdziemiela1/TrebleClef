@@ -1,7 +1,7 @@
 import VexFlow, { Element, Stem, Flag, Renderer, RenderContext, Stave, StaveNote, Voice, Formatter } from 'vexflow';
 import type { Note, Score } from './score';
 
-export const pixelsPerStaveY = 150;
+export const pixelsPerStaveY = 160;
 export const staveStartX = 0;
 export const staveStartY = 50;
 export const pixelsPerMeasureX = 270;

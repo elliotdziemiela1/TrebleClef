@@ -19,6 +19,8 @@ interface EditorProps {
 const noteNames = ['a','b','c','d','e','f','g']
 const octaveLevels = [3,4,5,6]
 
+const MAX_MEASURES = 200; // maximum number of measures allowed in a score
+
 // calculates the offset within the effective measure (the measure excluding padding for first and last notes) 
 // for each note in the score. returns a 2D array where 
 // each subarray corresponds to a measure and contains the x offsets of the notes in that measure.
@@ -59,6 +61,8 @@ export default function Editor({ historySize } : EditorProps) {
 		})
 	}, [])
 
+	// is the screen scrolled past the editor controls?
+	const [ isPastControls, setIsPastControls ] = useState(false);
 	
 	const scoreContainerRef = useRef<HTMLDivElement>(null);
 	
@@ -167,13 +171,27 @@ export default function Editor({ historySize } : EditorProps) {
 				currentKey = currentKey.slice(0,2) + name;
 				changeNote(editorScores[historyIndex].selectedNoteIdx, currentKey)
 				break;
+			case("measures"):
+				const newEditorScore : EditorScore = structuredClone(editorScores[historyIndex]);
+				if (name == "+")
+					newEditorScore.score.measures.push({notes: []});
+				else if (name == "-")
+					newEditorScore.score.measures.pop();
+				editorScoresReducer(newEditorScore);
+				break;
 		}
 		
 	}
+	
+	window.addEventListener("scroll", (event) => {
+		setIsPastControls(scoreContainerRef.current?.getBoundingClientRect()?.top < window.scrollY);
+	})
 
 	return (
 		<div className={styles.container} onKeyDown={handleKeyDown} tabIndex={0}>
-			<EditorControls buttonPressCallback={controlButtonHandler} editorScore={editorScores[historyIndex]} historyIndex={historyIndex}/>
+			<div className={isPastControls ? `${styles['controls-div-fixed']} ${styles['controls-div']}` : styles['controls-div']} >
+				<EditorControls buttonPressCallback={controlButtonHandler} editorScore={editorScores[historyIndex]} historyIndex={historyIndex}/>
+			</div>
 			<div ref={scoreContainerRef} className={styles['score-container']} onClick={selectNote}>
 				
 			</div>
@@ -184,10 +202,11 @@ export default function Editor({ historySize } : EditorProps) {
 interface EditorControlsProps {
 	buttonPressCallback: (name : string, catagory: string) => void,
 	editorScore : EditorScore,
-	historyIndex: number
+	historyIndex: number,
+	scrolledPast?: boolean
 }
 
-function EditorControls({ buttonPressCallback, editorScore, historyIndex} : EditorControlsProps) {
+function EditorControls({ buttonPressCallback, editorScore, historyIndex, scrolledPast} : EditorControlsProps) {
 	return (
 		<div className={styles['editor-controls']}>
 			<div className='history-and-file-buttons'>
@@ -196,18 +215,27 @@ function EditorControls({ buttonPressCallback, editorScore, historyIndex} : Edit
 				<button onClick={() => buttonPressCallback("Save", "control")}>Save</button>
 				<button onClick={() => buttonPressCallback("Load", "control")}>Load</button>
 			</div>
-			<div className={styles['note-change-buttons']}>
-				<p>Pitch: </p>
-				{noteNames.map((name : string, idx : number) => {
-					return (<button key={idx} onClick={() => buttonPressCallback(name, "pitch")} disabled={ !!editorScore.selectedNoteIdx?.length &&
-					(editorScore.score.measures[editorScore.selectedNoteIdx[0]].notes[editorScore.selectedNoteIdx[1]].keys[0][0] == name)}>{name}</button>)
-				})}
-				<p>Octave: </p>
-				{octaveLevels.map((num : number, idx : number) => {
-					return (<button key={idx} onClick={() => buttonPressCallback(num.toString(), "octave")} disabled={ !!editorScore.selectedNoteIdx?.length &&
-					editorScore.score.measures[editorScore.selectedNoteIdx[0]].notes[editorScore.selectedNoteIdx[1]].keys[0][2] == num.toString()}>{num}</button>)
-				})}						
+			<div className={styles['score-buttons']}>
+				<div className={styles['pitch-container']}>
+					<p>Pitch: </p>
+					{noteNames.map((name : string, idx : number) => {
+						return (<button key={idx} onClick={() => buttonPressCallback(name, "pitch")} disabled={ !!editorScore.selectedNoteIdx?.length &&
+						(editorScore.score.measures[editorScore.selectedNoteIdx[0]].notes[editorScore.selectedNoteIdx[1]].keys[0][0] == name)}>{name}</button>)
+					})}
+				</div>
+				<div className={styles['octave-container']}>
+					<p>Octave: </p>
+					{octaveLevels.map((num : number, idx : number) => {
+						return (<button key={idx} onClick={() => buttonPressCallback(num.toString(), "octave")} disabled={ !!editorScore.selectedNoteIdx?.length &&
+						editorScore.score.measures[editorScore.selectedNoteIdx[0]].notes[editorScore.selectedNoteIdx[1]].keys[0][2] == num.toString()}>{num}</button>)
+					})}						
+				</div>
+				<div className={styles['measures-container']}>
+					<p>Measures: </p>
+					<button onClick={() => buttonPressCallback("+", "measures")}>+</button>
+					<button onClick={() => buttonPressCallback("-", "measures")}>-</button>					
 
+				</div>
 			</div>
 		</div>
 	);

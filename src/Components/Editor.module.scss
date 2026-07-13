@@ -5,3 +5,33 @@
         outline: none;
     }
 }
+
+.controls-div {
+    background-color: blanchedalmond;
+    
+}
+
+.controls-div-fixed {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    margin: 0 auto;
+    width: 450px;
+}
+
+.editor-controls {
+    gap: 10px;
+    .score-buttons, .history-and-file-buttons{
+        display: flex;
+        justify-content: center;
+        flex-direction: row;
+        align-items: center;
+        gap: 2px;
+    }
+    .score-buttons {
+        gap: 20px;
+        
+    }
+}

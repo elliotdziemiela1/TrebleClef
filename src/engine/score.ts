@@ -33,8 +33,8 @@ export var demoScore : Score = {
             notes: [
                 { keys: ['b/4'], duration: 'h', type: 'r' },
                 { keys: ['b/4'], duration: 'q', type: 'r' },
-                { keys: ['b/4'], duration: '8', type: 'r' },
-                { keys: ['b/4'], duration: '32', type: 'r' },
+                { keys: ['b/4'], duration: '32'},
+                { keys: ['b/4'], duration: '32'},
                 { keys: ['b/4'], duration: '32', type: 'r' },
                 { keys: ['b/4'], duration: '32', type: 'r' },
                 { keys: ['b/4'], duration: '32', type: 'r' }
