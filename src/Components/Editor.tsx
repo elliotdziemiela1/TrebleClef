@@ -64,9 +64,6 @@ export default function Editor({ historySize } : EditorProps) {
 		})
 	}, [])
 
-	// is the screen scrolled past the editor controls?
-	const [ isPastControls, setIsPastControls ] = useState(false);
-	
 	const scoreContainerRef = useRef<HTMLDivElement>(null);
 	
 	// index into history of scores. historySize-1 = latest score, 0 = oldest score.
@@ -193,13 +190,9 @@ export default function Editor({ historySize } : EditorProps) {
 		
 	}
 	
-	window.addEventListener("scroll", (event) => {
-		setIsPastControls(scoreContainerRef.current?.getBoundingClientRect()?.top < window.scrollY);
-	})
-
 	return (
 		<div className={styles.container} onKeyDown={handleKeyDown} tabIndex={0}>
-			<div className={isPastControls ? `${styles['controls-div-fixed']} ${styles['controls-div']}` : styles['controls-div']} >
+			<div className={styles['controls-div']} >
 				<EditorControls buttonPressCallback={controlButtonHandler} editorScore={editorScores[historyIndex]} historyIndex={historyIndex}/>
 			</div>
 			<div ref={scoreContainerRef} className={styles['score-container']} onClick={selectNote}>
@@ -216,7 +209,7 @@ interface EditorControlsProps {
 	scrolledPast?: boolean
 }
 
-function EditorControls({ buttonPressCallback, editorScore, historyIndex, scrolledPast} : EditorControlsProps) {
+function EditorControls({ buttonPressCallback, editorScore, historyIndex } : EditorControlsProps) {
 	return (
 		<div className={styles['editor-controls']}>
 			<div className='history-and-file-buttons'>
