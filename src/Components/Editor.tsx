@@ -4,7 +4,7 @@ import { calcNoteWidth, clefPadding, effectiveMeasureWidth, renderScore } from '
 import { demoScore, emptyScore, type Score, type Note, type Measure, type Duration } from '../engine/score';
 import { pixelsPerMeasureX, pixelsPerStaveY, staveStartX, staveStartY, 
 	rendererWidth, measuresPerStave, measureWidthPadding } from '../engine/renderer'; // Will use these soon
-
+import { HISTORY_SIZE } from '../EditorPage';
 
 type EditorScore = { 
 	score: Score, // the musical score
@@ -15,6 +15,9 @@ type EditorScore = {
 interface EditorProps {
 	historySize : number
 }
+
+const noteNames = ['a','b','c','d','e','f','g']
+const octaveLevels = [1,2,3,4,5,6]
 
 // calculates the offset within the effective measure (the measure excluding padding for first and last notes) 
 // for each note in the score. returns a 2D array where 
@@ -149,7 +152,7 @@ export default function Editor({ historySize } : EditorProps) {
 
 	return (
 		<div className={styles.container} onKeyDown={handleKeyDown} tabIndex={0}>
-			<EditorControls buttonPressCallback={controlButtonHandler}/>
+			<EditorControls buttonPressCallback={controlButtonHandler} editorScore={editorScores[historyIndex]} historyIndex={historyIndex}/>
 			<div ref={scoreContainerRef} className={styles['score-container']} onClick={selectNote}>
 				
 			</div>
@@ -158,16 +161,33 @@ export default function Editor({ historySize } : EditorProps) {
 }
 
 interface EditorControlsProps {
-	buttonPressCallback: (name : string) => void;
+	buttonPressCallback: (name : string) => void,
+	editorScore : EditorScore,
+	historyIndex: number
 }
 
-function EditorControls({ buttonPressCallback } : EditorControlsProps) {
+function EditorControls({ buttonPressCallback, editorScore, historyIndex} : EditorControlsProps) {
 	return (
 		<div className={styles['editor-controls']}>
-			<button onClick={() => buttonPressCallback("Undo")}>Undo</button>
-			<button onClick={() => buttonPressCallback("Redo")}>Redo</button>
-			<button onClick={() => buttonPressCallback("Save")}>Save</button>
-			<button onClick={() => buttonPressCallback("Load")}>Load</button>
+			<div className='history-and-file-buttons'>
+				<button onClick={() => buttonPressCallback("Undo")} disabled={historyIndex == 0}>Undo</button>
+				<button onClick={() => buttonPressCallback("Redo")} disabled={historyIndex == HISTORY_SIZE - 1}>Redo</button>
+				<button onClick={() => buttonPressCallback("Save")}>Save</button>
+				<button onClick={() => buttonPressCallback("Load")}>Load</button>
+			</div>
+			<div className={styles['note-change-buttons']}>
+				<p>Pitch: </p>
+				{noteNames.map((name : string, idx : number) => {
+					return (<button key={idx} onClick={() => buttonPressCallback(name)} disabled={ !!editorScore.selectedNoteIdx?.length &&
+					(editorScore.score.measures[editorScore.selectedNoteIdx[0]].notes[editorScore.selectedNoteIdx[1]].keys[0][0] == name)}>{name}</button>)
+				})}
+				<p>Octave: </p>
+				{octaveLevels.map((num : number, idx : number) => {
+					return (<button key={idx} onClick={() => buttonPressCallback(num.toString())} disabled={ !!editorScore.selectedNoteIdx?.length &&
+					editorScore.score.measures[editorScore.selectedNoteIdx[0]].notes[editorScore.selectedNoteIdx[1]].keys[0][2] == num.toString()}>{num}</button>)
+				})}						
+
+			</div>
 		</div>
 	);
 }
