@@ -111,6 +111,7 @@ export default function Editor({ historySize } : EditorProps) {
 		const scoreLeft = boundingRect.left + staveStartX + 7; // 7 is a fudge factor to account for the clef and stave padding
 		const scoreTop = boundingRect.top;
 		for (let i = 0; i < editorScores[historyIndex].score.measures.length; i++){
+			console.log("i: " + i)
 			const measureLeft = scoreLeft + clefPadding + (i%4 * pixelsPerMeasureX);
 			const measureRight = measureLeft + pixelsPerMeasureX;
 			const effectiveMeasureLeft = measureLeft + measureWidthPadding / 2;
@@ -119,7 +120,8 @@ export default function Editor({ historySize } : EditorProps) {
 			// if clicked inside of this measure
 			if (event.clientX > measureLeft && event.clientX < measureRight && event.clientY > measureTop && event.clientY < measureBottom){
 				// find the note that was clicked on
-				for (let j = editorScores[historyIndex].measureNoteLocations.length - 1; j >= 0; j--){
+				for (let j = editorScores[historyIndex].measureNoteLocations[i].length - 1; j >= 0; j--){
+					debugger
 					if (event.clientX - effectiveMeasureLeft > editorScores[historyIndex].measureNoteLocations[i][j]) {
 						changeSelectedNote([i,j]);
 						return true;
