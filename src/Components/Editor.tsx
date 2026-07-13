@@ -18,7 +18,8 @@ interface EditorProps {
 
 const noteNames = ['a','b','c','d','e','f','g']
 const octaveLevels = [3,4,5,6]
-const fourRests : Note[] = new Array(4).fill({ keys: ['b/4'], duration: 'q', type: 'r' });
+const fourRests : Note[] = [{ keys: ['b/4'], duration: 'q', type: 'r' },{ keys: ['b/4'], duration: 'q', type: 'r' },
+	{ keys: ['b/4'], duration: 'q', type: 'r' },{ keys: ['b/4'], duration: 'q', type: 'r' }];
 
 const MAX_MEASURES = 200; // maximum number of measures allowed in a score
 
@@ -42,6 +43,7 @@ function getMeasureNoteXLocations(score : Score) : number[][] {
 
 		}
 	}
+	// debugger
 	return measureNoteXLocations;
 }
 
@@ -79,6 +81,7 @@ export default function Editor({ historySize } : EditorProps) {
 	// array for current EditorScore and it's history. First element is oldest, last is newest.
 	const [ editorScores, editorScoresReducer ] = useReducer((state : EditorScore[], action : EditorScore) => {
 		// move to newly created score frame
+		debugger
 		historyIndexDispatch(historySize-1); 
 		// delete oldest EditorScore, and push newest EditorScore
 		return [...state.slice(1,historySize), action];
@@ -92,7 +95,9 @@ export default function Editor({ historySize } : EditorProps) {
 		if (!!newEditorScore.selectedNoteIdx?.length)
 			newEditorScore.score.measures[newEditorScore.selectedNoteIdx[0]].notes[newEditorScore.selectedNoteIdx[1]].color = "black";
 		newEditorScore.selectedNoteIdx = newIdx;
+		// debugger
 		newEditorScore.score.measures[newIdx[0]].notes[newIdx[1]].color = "blue";
+		newEditorScore.measureNoteLocations = getMeasureNoteXLocations(newEditorScore.score);
 		editorScoresReducer(newEditorScore);
 	}
 
@@ -101,6 +106,7 @@ export default function Editor({ historySize } : EditorProps) {
 		const newEditorScore : EditorScore = structuredClone(editorScores[historyIndex]);
 		newEditorScore.score.measures[idx[0]].notes[idx[1]].type = 'r';
 		newEditorScore.score.measures[idx[0]].notes[idx[1]].keys = ['b/4'];
+		newEditorScore.measureNoteLocations = getMeasureNoteXLocations(newEditorScore.score);
 		editorScoresReducer(newEditorScore);
 	}
 
@@ -122,7 +128,6 @@ export default function Editor({ historySize } : EditorProps) {
 			if (event.clientX > measureLeft && event.clientX < measureRight && event.clientY > measureTop && event.clientY < measureBottom){
 				// find the note that was clicked on
 				for (let j = editorScores[historyIndex].measureNoteLocations[i].length - 1; j >= 0; j--){
-					debugger
 					if (event.clientX - effectiveMeasureLeft > editorScores[historyIndex].measureNoteLocations[i][j]) {
 						changeSelectedNote([i,j]);
 						return true;
@@ -136,6 +141,7 @@ export default function Editor({ historySize } : EditorProps) {
 	function changeNote(position : number[], newKey : string) {
 		const newEditorScore : EditorScore = structuredClone(editorScores[historyIndex]);
 		newEditorScore.score.measures[position[0]].notes[position[1]].keys[0] = newKey;
+		newEditorScore.measureNoteLocations = getMeasureNoteXLocations(newEditorScore.score);
 		editorScoresReducer(newEditorScore);
 	}
 
@@ -143,8 +149,8 @@ export default function Editor({ historySize } : EditorProps) {
 	// rerender score when it changes, or history index changes
 	useLayoutEffect(() => {
 			if (scoreContainerRef.current) {
+				debugger
 				renderScore(scoreContainerRef.current, editorScores[historyIndex].score);
-				// measureNoteLocations.current = getMeasureNoteXLocations();
 			}
 	}, [editorScores, historyIndex]);
 
@@ -180,6 +186,7 @@ export default function Editor({ historySize } : EditorProps) {
 					newEditorScore.score.measures.push({notes: [...fourRests]});
 				else if (name == "-" && newEditorScore.score.measures.length > 1)
 					newEditorScore.score.measures.pop();
+				newEditorScore.measureNoteLocations = getMeasureNoteXLocations(newEditorScore.score);
 				editorScoresReducer(newEditorScore);
 				break;
 		}
