@@ -101,7 +101,6 @@ export default function Editor({ historySize } : EditorProps) {
 
 	// function called when the score container is clicked. It determines which note was clicked on and updates the selectedNoteIdx state accordingly.
 	const selectNote = (event: React.MouseEvent<HTMLDivElement>) : boolean => {
-		debugger
 		if (!scoreContainerRef.current)
 			return false;
 		const boundingRect = scoreContainerRef.current.getBoundingClientRect();
@@ -127,6 +126,12 @@ export default function Editor({ historySize } : EditorProps) {
 		return false;
 	}
 
+	function changeNote(position : number[], newKey : string) {
+		const newEditorScore : EditorScore = structuredClone(editorScores[historyIndex]);
+		newEditorScore.score.measures[position[0]].notes[position[1]].keys[0] = newKey;
+		editorScoresReducer(newEditorScore);
+	}
+
 
 	// rerender score when it changes, or history index changes
 	useLayoutEffect(() => {
@@ -143,11 +148,25 @@ export default function Editor({ historySize } : EditorProps) {
 		}
 	}
 
-	function controlButtonHandler(name : string) {
-		switch(name){
-			case("Undo"): historyIndexDispatch(historyIndex - 1); break;
-			case("Redo"): historyIndexDispatch(historyIndex + 1); break;
+	function controlButtonHandler(name : string, catagory : string) {
+		switch(catagory){
+			case("control"):
+				switch(name){
+					case("Undo"): historyIndexDispatch(historyIndex - 1); break;
+					case("Redo"): historyIndexDispatch(historyIndex + 1); break;
+				}
+				break;
+			case("pitch"):
+				let currentKey : string = editorScores[historyIndex].score.measures[editorScores[historyIndex].selectedNoteIdx[0]].notes[editorScores[historyIndex].selectedNoteIdx[1]].keys[0];
+				debugger
+				currentKey = name + currentKey.slice(1,3);
+				changeNote(editorScores[historyIndex].selectedNoteIdx, currentKey)
+				break;
+			case("octave"):
+
+				break;
 		}
+		
 	}
 
 	return (
@@ -161,7 +180,7 @@ export default function Editor({ historySize } : EditorProps) {
 }
 
 interface EditorControlsProps {
-	buttonPressCallback: (name : string) => void,
+	buttonPressCallback: (name : string, catagory: string) => void,
 	editorScore : EditorScore,
 	historyIndex: number
 }
@@ -170,20 +189,20 @@ function EditorControls({ buttonPressCallback, editorScore, historyIndex} : Edit
 	return (
 		<div className={styles['editor-controls']}>
 			<div className='history-and-file-buttons'>
-				<button onClick={() => buttonPressCallback("Undo")} disabled={historyIndex == 0}>Undo</button>
-				<button onClick={() => buttonPressCallback("Redo")} disabled={historyIndex == HISTORY_SIZE - 1}>Redo</button>
-				<button onClick={() => buttonPressCallback("Save")}>Save</button>
-				<button onClick={() => buttonPressCallback("Load")}>Load</button>
+				<button onClick={() => buttonPressCallback("Undo", "control")} disabled={historyIndex == 0}>Undo</button>
+				<button onClick={() => buttonPressCallback("Redo", "control")} disabled={historyIndex == HISTORY_SIZE - 1}>Redo</button>
+				<button onClick={() => buttonPressCallback("Save", "control")}>Save</button>
+				<button onClick={() => buttonPressCallback("Load", "control")}>Load</button>
 			</div>
 			<div className={styles['note-change-buttons']}>
 				<p>Pitch: </p>
 				{noteNames.map((name : string, idx : number) => {
-					return (<button key={idx} onClick={() => buttonPressCallback(name)} disabled={ !!editorScore.selectedNoteIdx?.length &&
+					return (<button key={idx} onClick={() => buttonPressCallback(name, "pitch")} disabled={ !!editorScore.selectedNoteIdx?.length &&
 					(editorScore.score.measures[editorScore.selectedNoteIdx[0]].notes[editorScore.selectedNoteIdx[1]].keys[0][0] == name)}>{name}</button>)
 				})}
 				<p>Octave: </p>
 				{octaveLevels.map((num : number, idx : number) => {
-					return (<button key={idx} onClick={() => buttonPressCallback(num.toString())} disabled={ !!editorScore.selectedNoteIdx?.length &&
+					return (<button key={idx} onClick={() => buttonPressCallback(num.toString(), "octave")} disabled={ !!editorScore.selectedNoteIdx?.length &&
 					editorScore.score.measures[editorScore.selectedNoteIdx[0]].notes[editorScore.selectedNoteIdx[1]].keys[0][2] == num.toString()}>{num}</button>)
 				})}						
 
