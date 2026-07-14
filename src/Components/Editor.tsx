@@ -1,6 +1,6 @@
 import styles from './Editor.module.scss';
 import { useRef, useEffect, useState, useCallback, useLayoutEffect, useReducer, useMemo } from 'react';
-import { calcNoteWidth, clefPadding, effectiveMeasureWidth, renderScore } from '../engine/renderer';
+import { calcNoteWidth, clefPadding, effectiveMeasureWidth, renderScore, glyphs } from '../engine/renderer';
 import { demoScore, emptyScore, type Score, type Note, type Measure, type Duration } from '../engine/score';
 import { pixelsPerMeasureX, pixelsPerStaveY, staveStartX, staveStartY, 
 	rendererWidth, measuresPerStave, measureWidthPadding } from '../engine/renderer'; // Will use these soon
@@ -18,10 +18,13 @@ interface EditorProps {
 
 const noteNames = ['a','b','c','d','e','f','g']
 const octaveLevels = [3,4,5,6]
-const fourRests : Note[] = [{ keys: ['b/4'], duration: 'q', type: 'r' },{ keys: ['b/4'], duration: 'q', type: 'r' },
-	{ keys: ['b/4'], duration: 'q', type: 'r' },{ keys: ['b/4'], duration: 'q', type: 'r' }];
+const durations = [1, 2, 4, 8, 16, 32]
+const noteUpGlyphs = Object.values(glyphs.noteUpGlyphs);
+const restGlyphs = Object.values(glyphs.restGlyphs);
+const fourRests : Note[] = [{ keys: ['b/4'], duration: 4, type: 'r' },{ keys: ['b/4'], duration: 4, type: 'r' },
+	{ keys: ['b/4'], duration: 4, type: 'r' },{ keys: ['b/4'], duration: 4, type: 'r' }];
 
-const MAX_MEASURES = 200; // maximum number of measures allowed in a score
+const MAX_MEASURES = 100; // maximum number of measures allowed in a score
 
 // calculates the offset within the effective measure (the measure excluding padding for first and last notes) 
 // for each note in the score. returns a 2D array where 
@@ -158,7 +161,7 @@ export default function Editor({ historySize } : EditorProps) {
 		}
 	}
 
-	function controlButtonHandler(name : string, catagory : string) {
+	function controlButtonHandler(name : string | number, catagory : string) {
 		let currentKey : string;
 		switch(catagory){
 			case("control"):
@@ -168,14 +171,18 @@ export default function Editor({ historySize } : EditorProps) {
 				}
 				break;
 			case("pitch"):
-				currentKey = editorScores[historyIndex].score.measures[editorScores[historyIndex].selectedNoteIdx[0]].notes[editorScores[historyIndex].selectedNoteIdx[1]].keys[0];
-				currentKey = name + currentKey.slice(1,3);
-				changeNote(editorScores[historyIndex].selectedNoteIdx, currentKey)
+				if (editorScores[historyIndex].selectedNoteIdx) {
+					currentKey = editorScores[historyIndex].score.measures[editorScores[historyIndex].selectedNoteIdx[0]].notes[editorScores[historyIndex].selectedNoteIdx[1]].keys[0];
+					currentKey = name + currentKey.slice(1,3);
+					changeNote(editorScores[historyIndex].selectedNoteIdx, currentKey)
+				}
 				break;
 			case("octave"):
-				currentKey = editorScores[historyIndex].score.measures[editorScores[historyIndex].selectedNoteIdx[0]].notes[editorScores[historyIndex].selectedNoteIdx[1]].keys[0];
-				currentKey = currentKey.slice(0,2) + name;
-				changeNote(editorScores[historyIndex].selectedNoteIdx, currentKey)
+				if (editorScores[historyIndex].selectedNoteIdx) {
+					currentKey = editorScores[historyIndex].score.measures[editorScores[historyIndex].selectedNoteIdx[0]].notes[editorScores[historyIndex].selectedNoteIdx[1]].keys[0];
+					currentKey = currentKey.slice(0,2) + name;
+					changeNote(editorScores[historyIndex].selectedNoteIdx, currentKey)
+				}
 				break;
 			case("measures"):
 				const newEditorScore : EditorScore = structuredClone(editorScores[historyIndex]);
@@ -186,6 +193,13 @@ export default function Editor({ historySize } : EditorProps) {
 				newEditorScore.measureNoteLocations = getMeasureNoteXLocations(newEditorScore.score);
 				editorScoresReducer(newEditorScore);
 				break;
+			case("notes"):
+				switch(name){ 
+					// no need to check for validity. Button will be disabled if invalid.
+					case(1):
+						
+						break;
+				}
 		}
 		
 	}
@@ -203,7 +217,7 @@ export default function Editor({ historySize } : EditorProps) {
 }
 
 interface EditorControlsProps {
-	buttonPressCallback: (name : string, catagory: string) => void,
+	buttonPressCallback: (name : string | number, catagory: string) => void,
 	editorScore : EditorScore,
 	historyIndex: number,
 	scrolledPast?: boolean
@@ -235,9 +249,18 @@ function EditorControls({ buttonPressCallback, editorScore, historyIndex } : Edi
 				</div>
 				<div className={styles['measures-container']}>
 					<p>Measures: </p>
-					<button onClick={() => buttonPressCallback("+", "measures")}>+</button>
-					<button onClick={() => buttonPressCallback("-", "measures")}>-</button>					
-
+					<button onClick={() => buttonPressCallback("+", "measures")} disabled={editorScore.score.measures.length >= MAX_MEASURES}>+</button>
+					<button onClick={() => buttonPressCallback("-", "measures")} disabled={editorScore.score.measures.length <= 1}>-</button>					
+				</div>
+				<div className={styles['notes-and-rests-container']}>
+					{durations.map((duration : number, idx: number) =>
+						<button onClick={() => buttonPressCallback(idx, "notes")} key={idx} disabled={!!editorScore.selectedNoteIdx?.length &&
+							(editorScore.score.measures[editorScore.selectedNoteIdx[0]].notes[editorScore.selectedNoteIdx[1]].duration == duration) &&
+							(editorScore.score.measures[editorScore.selectedNoteIdx[0]].notes[editorScore.selectedNoteIdx[1]].type != 'r')
+						}>
+							<p style={{fontFamily: 'Bravura', fontSize: '24px'}}>{noteUpGlyphs[idx]}</p>
+						</button>
+					)}
 				</div>
 			</div>
 		</div>
