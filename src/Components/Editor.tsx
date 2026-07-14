@@ -190,7 +190,8 @@ export default function Editor({ historySize } : EditorProps) {
 					newEditorScore.score.measures.push({notes: [...fourRests]});
 				else if (name == "-" && newEditorScore.score.measures.length > 1)
 					newEditorScore.score.measures.pop();
-				newEditorScore.measureNoteLocations = getMeasureNoteXLocations(newEditorScore.score);
+					newEditorScore.selectedNoteIdx = undefined; // deselect note if the measure it was in was deleted
+				}
 				editorScoresReducer(newEditorScore);
 				break;
 			case("notes"):
