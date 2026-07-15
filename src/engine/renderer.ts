@@ -16,27 +16,45 @@ export const ledgerWidth = 36; // the width of the ledger lines that are drawn f
 export const maxNoteFontSize = 38;
 export const effectiveMeasureWidth = pixelsPerMeasureX - measureWidthPadding;
 
-const quarterNoteGlyph = "\uE0A4";
-const halfNoteGlyph = "\uE0A3";
-const wholeNoteGlyph = "\uE1D2"; 
-const restWholeGlyph = "\uE4E3";
-const restHalfGlyph = "\uE4E4";
-const restQuarterGlyph = "\uE4E5";  
-const rest8thGlyph = "\uE4E6";
-const rest16thGlyph = "\uE4E7";
-const rest32ndGlyph = "\uE4E8";
+export const idxOfRestGlyphs = 6;
 
-export function calcNoteFontSize(duration: string): number {
+export const glyphs = {
+    noteUpGlyphs: {
+        wholeNoteGlyph: "\uE1D2", 
+        halfNoteGlyph: "\uE0A3",
+        quarterNoteUpGlyph: "\uE1D5",
+        eighthNoteUpGlyph: "\uE1D7",
+        sixteenthNoteUpGlyph: "\uE1D9",
+        thirtySecondNoteUpGlyph: "\uE1DB",
+    },
+    restGlyphs: {
+        restWholeGlyph: "\uE4E3",
+        restHalfGlyph: "\uE4E4",
+        restQuarterGlyph: "\uE4E5",  
+        rest8thGlyph: "\uE4E6",
+        rest16thGlyph: "\uE4E7",
+        rest32ndGlyph: "\uE4E8",
+    },
+    noteDownGlyphs: {
+        quarterNoteDownGlyph: "\uE1D6", 
+        eighthNoteDownGlyph: "\uE1D8",
+        sixteenthNoteDownGlyph: "\uE1DA",
+        thirtySecondNoteDownGlyph: "\uE1DC",
+    },
+    quarterNoteGlyph: "\uE0A4"
+}
+
+export function calcNoteFontSize(duration: number): number {
     switch (duration) {
-        case '8': return 36;
-        case '16': return 32;
-        case '32': return 16;
+        case 8: return maxNoteFontSize * 0.92;
+        case 16: return maxNoteFontSize * 0.86;
+        case 32: return maxNoteFontSize * 0.42;
         default: return maxNoteFontSize;
     }
 }
 
-export function calcNoteWidth(duration: string): number {
-    return effectiveMeasureWidth / (duration === 'w' ? 1 : duration === 'h' ? 2 : duration === 'q' ? 4 :  parseInt(duration, 10));
+export function calcNoteWidth(duration: number): number {
+    return effectiveMeasureWidth / duration
 }
 
 // returns the difference between two notes' pitches. returns pitch1 - pitch2.
@@ -83,7 +101,7 @@ export function renderScore(container: HTMLDivElement, score: Score) {
 			// 
 			// Rendering logic
 			//
-            const semitonesAboveb4 = noteDiff(note, {keys: ['b/4'], duration: 'q'});
+            const semitonesAboveb4 = noteDiff(note, {keys: ['b/4'], duration: 4});
             const noteFontSize = calcNoteFontSize(note.duration);
             if (note.color){
                 ctx.fillStyle = note.color;
@@ -93,13 +111,13 @@ export function renderScore(container: HTMLDivElement, score: Score) {
                 // draw the rest glyph
                 const restGlyph = new Element();
                 switch(note.duration){
-                    case('w'): restGlyph.setText(restWholeGlyph); break;
-                    case('h'): restGlyph.setText(restHalfGlyph); break;
-                    case('q'): restGlyph.setText(restQuarterGlyph); break;
-                    case('8'): restGlyph.setText(rest8thGlyph); break;
-                    case('16'): restGlyph.setText(rest16thGlyph); break;
-                    case('32'): restGlyph.setText(rest32ndGlyph); break;
-                    default: restGlyph.setText(restQuarterGlyph); break;
+                    case(1): restGlyph.setText(glyphs.restGlyphs.restWholeGlyph); break;
+                    case(2): restGlyph.setText(glyphs.restGlyphs.restHalfGlyph); break;
+                    case(4): restGlyph.setText(glyphs.restGlyphs.restQuarterGlyph); break;
+                    case(8): restGlyph.setText(glyphs.restGlyphs.rest8thGlyph); break;
+                    case(16): restGlyph.setText(glyphs.restGlyphs.rest16thGlyph); break;
+                    case(32): restGlyph.setText(glyphs.restGlyphs.rest32ndGlyph); break;
+                    default: restGlyph.setText(glyphs.restGlyphs.restQuarterGlyph); break;
                 }
                 restGlyph.setFontSize(noteFontSize);
                 restGlyph.setX(x);
@@ -108,7 +126,7 @@ export function renderScore(container: HTMLDivElement, score: Score) {
             } else { // else the note is a regular note, not a rest
                 // Calculate variables for rendering the note
                 let flagGlyph = null;
-                let noteHeadGlyph = quarterNoteGlyph;
+                let noteHeadGlyph = glyphs.quarterNoteGlyph;
                 let stemDirection = Stem.UP; // or Stem.UP
                 // const noteOffset = -(((note.keys[0][0].charCodeAt(0) - 'b'.charCodeAt(0)) + ((Number(note.keys[0][2]) - 4) * 7)) * (spacingBetweenLines ) / 2);
                 
@@ -117,19 +135,19 @@ export function renderScore(container: HTMLDivElement, score: Score) {
                 }
 
                 switch(note.duration){
-                    case('w'): noteHeadGlyph = wholeNoteGlyph; break;
-                    case('h'): noteHeadGlyph = halfNoteGlyph; break;
-                    case('q'): flagGlyph = null; break;
-                    case('8'):
+                    case(1): noteHeadGlyph = glyphs.noteUpGlyphs.wholeNoteGlyph; break;
+                    case(2): noteHeadGlyph = glyphs.noteUpGlyphs.halfNoteGlyph; break;
+                    case(4): flagGlyph = null; break;
+                    case(8):
                         flagGlyph = stemDirection === Stem.DOWN ? VexFlow.Glyphs.flag8thDown : VexFlow.Glyphs.flag8thUp;
                         break;
-                    case('16'):
+                    case(16):
                         flagGlyph = stemDirection === Stem.DOWN ? VexFlow.Glyphs.flag16thDown : VexFlow.Glyphs.flag16thUp;
                         break;
-                    case('32'):
+                    case(32):
                         flagGlyph = stemDirection === Stem.DOWN ? VexFlow.Glyphs.flag32ndDown : VexFlow.Glyphs.flag32ndUp;
                         break;
-                    default: flagGlyph = null; noteHeadGlyph = quarterNoteGlyph; break;
+                    default: flagGlyph = null; noteHeadGlyph = glyphs.quarterNoteGlyph; break;
                 }
                 
                 
@@ -156,7 +174,7 @@ export function renderScore(container: HTMLDivElement, score: Score) {
                     }
                 }
                 
-                if (note.duration !== 'w'){
+                if (note.duration !== 1){
                     // draw the stem
                     const stemXOffset = stemDirection === Stem.UP ? glyph.getWidth() - 1 : 1; // offset the stem to the right of the notehead by half the font size
                     let stemX = glyph.getX() + stemXOffset;
@@ -174,7 +192,7 @@ export function renderScore(container: HTMLDivElement, score: Score) {
 
                     // notes array is sorted from highest note to lowest note
 
-                    if (note.duration !== 'h'){
+                    if (note.duration !== 2){
                         // draw the flag
                         const flag = new Flag();
                         if (!!flagGlyph){
