@@ -113,6 +113,7 @@ export default function Editor({ historySize } : EditorProps) {
 		if (!scoreContainerRef.current)
 			return false;
 		const boundingRect = scoreContainerRef.current.getBoundingClientRect();
+		debugger
 		const scoreLeft = boundingRect.left + staveStartX + 7; // 7 is a fudge factor to account for the clef and stave padding
 		const scoreTop = boundingRect.top;
 		for (let i = 0; i < editorScores[historyIndex].score.measures.length; i++){
@@ -290,7 +291,7 @@ export default function Editor({ historySize } : EditorProps) {
 			<div className={styles['controls-div']} >
 				<EditorControls buttonPressCallback={controlButtonHandler} editorScore={editorScores[historyIndex]} historyIndex={historyIndex}/>
 			</div>
-			<div ref={scoreContainerRef} className={styles['score-container']} onClick={selectNote}>
+			<div ref={scoreContainerRef} style={{width: rendererWidth, margin: "auto"}} className={styles['score-container']} onClick={selectNote}>
 				
 			</div>
 		</div>
@@ -336,6 +337,7 @@ function EditorControls({ buttonPressCallback, editorScore, historyIndex } : Edi
 					<button onClick={() => buttonPressCallback("-", "measures")} disabled={editorScore.score.measures.length <= 1}>-</button>					
 				</div>
 				<div className={styles['notes-and-rests-container']}>
+					// played note buttons
 					{durations.map((duration : number, idx: number) =>
 						<button onClick={() => buttonPressCallback(duration, "notes")} key={idx} disabled={!!editorScore.selectedNoteIdx?.length &&
 							(editorScore.score.measures[editorScore.selectedNoteIdx[0]].notes[editorScore.selectedNoteIdx[1]].duration == duration) &&
@@ -344,6 +346,7 @@ function EditorControls({ buttonPressCallback, editorScore, historyIndex } : Edi
 							<p style={{fontFamily: 'Bravura', fontSize: '24px'}}>{noteUpGlyphs[idx]}</p>
 						</button>
 					)}
+					// rest buttons
 					{durations.map((duration : number, idx: number) =>
 						<button onClick={() => buttonPressCallback(duration, "rests")} key={idx} disabled={!!editorScore.selectedNoteIdx?.length &&
 							(editorScore.score.measures[editorScore.selectedNoteIdx[0]].notes[editorScore.selectedNoteIdx[1]].duration == duration) &&

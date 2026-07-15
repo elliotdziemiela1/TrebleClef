@@ -46,9 +46,9 @@ export const glyphs = {
 
 export function calcNoteFontSize(duration: number): number {
     switch (duration) {
-        case 8: return 36;
-        case 16: return 32;
-        case 32: return 16;
+        case 8: return maxNoteFontSize * 0.92;
+        case 16: return maxNoteFontSize * 0.86;
+        case 32: return maxNoteFontSize * 0.42;
         default: return maxNoteFontSize;
     }
 }
