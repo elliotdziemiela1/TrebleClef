@@ -162,11 +162,15 @@ export default function Editor({ historySize } : EditorProps) {
 		// A ResizeObserver reacts to actual layout box changes of the element itself.
 		function applyResponsiveBreakpoints(containerWidth: number) {
 			if (containerWidth < 600) { // 0-600
-				responsiveRendererVariables.pixelsPerMeasureX = 60;
-				responsiveRendererVariables.maxNoteFontSize = 18;
+				responsiveRendererVariables.pixelsPerMeasureX = 70;
+				responsiveRendererVariables.maxNoteFontSize = 20;
 				responsiveRendererVariables.clefPadding = 16;
+			} else if (containerWidth < 1000){
+				responsiveRendererVariables.pixelsPerMeasureX = 140;
+				responsiveRendererVariables.maxNoteFontSize = 22;
+				responsiveRendererVariables.clefPadding = 20;
 			} else if (containerWidth < 1440) { // 600-1440
-				responsiveRendererVariables.pixelsPerMeasureX = 124;
+				responsiveRendererVariables.pixelsPerMeasureX = 210;
 				responsiveRendererVariables.maxNoteFontSize = 28;
 				responsiveRendererVariables.clefPadding = 28;
 			} else if (containerWidth < 1920) { // 1440-1920
