@@ -221,30 +221,33 @@ export default function Editor({ historySize } : EditorProps) {
 
 						// change to the new duration
 						newScore.score.measures[newScore.selectedNoteIdx![0]].notes[i].duration = (buttonName as Duration);
+						// change to new type 
+						newScore.score.measures[newScore.selectedNoteIdx![0]].notes[i].type = newScore.score.measures[newScore.selectedNoteIdx![0]].notes[newScore.selectedNoteIdx![1]].type;
+						// set new selected note to the note that was changed
 						newScore.selectedNoteIdx = [newScore.selectedNoteIdx![0], i];
 						
 						// for each note after the changed note, check if it still fits in the measure. If not, recurse by breaking it in half 
 						// until it fits or hits 32nd notes, at which point it will be deleted if it still doesn't fit.
-						for (let j = i + 1; j < newMeasure.notes.length; j++){
+						for (let j = newMeasure.notes.length - 1; j > i; j--){
 							console.log("j: " + j)
 							debugger
 							runningDuration += 1/newMeasure.notes[j].duration;
 							if (runningDuration > 1){ // if this note doesn't fit in the measure anymore
-								if (newMeasure.notes[j].duration == 32){ // if this note is already a 32nd note, delete it and all notes after it
-									newScore.score.measures[newScore.selectedNoteIdx![0]].notes = newScore.score.measures[newScore.selectedNoteIdx![0]].notes.slice(0, j);
-									break;
+								if (newMeasure.notes[j].duration == 32){ // if this note is already a 32nd note, delete it 
+									newScore.score.measures[newScore.selectedNoteIdx![0]].notes = newScore.score.measures[newScore.selectedNoteIdx![0]].notes.slice(0, j)
+										.concat(newScore.score.measures[newScore.selectedNoteIdx![0]].notes.slice(j + 1));
 								} else {
 									// undo increase to duration
 									runningDuration -= 1/newMeasure.notes[j].duration;
 									// if the note is not a 32nd note, break it in half
-									const newNote : Note = {keys: [...currentNote.keys], duration: (newMeasure.notes[j].duration * 2) as Duration, type: currentNote.type};
+									const newNote : Note = {keys: newMeasure.notes[j].keys, duration: (newMeasure.notes[j].duration * 2) as Duration, type: newMeasure.notes[j].type};
 									newScore.score.measures[newScore.selectedNoteIdx![0]].notes = [
 										...newScore.score.measures[newScore.selectedNoteIdx![0]].notes.slice(0, j),
-										{...newNote},
-										{...newNote},
+										structuredClone(newNote),
+										structuredClone(newNote),
 										...newScore.score.measures[newScore.selectedNoteIdx![0]].notes.slice(j + 1)
 									];
-									j--; // recheck this note in the next iteration
+									j += 2; // recheck this note in the next iteration
 								}
 							}
 						}
