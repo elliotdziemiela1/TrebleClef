@@ -59,7 +59,7 @@ export default function Editor({ historySize } : EditorProps) {
 	const initialEditorScoresHistory = useMemo(() => {
 		return Array.from({length: historySize}, (i, idx) : EditorScore =>{
 			return {
-				score: structuredClone(demoScore),
+				score: structuredClone(emptyScore),
 				measureNoteLocations: demoMeasureNoteLocations, // array of primitives: no need for deep copy
 				selectedNoteIdx: undefined
 			}

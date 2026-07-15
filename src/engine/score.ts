@@ -12,7 +12,25 @@ export var emptyScore : Score = {
         { notes: [
                 { keys: ['b/4'], duration: 4, type: 'r' },
                 { keys: ['b/4'], duration: 4, type: 'r' },
-                { keys: ['b/4'], duration: 4, type: 'r', color: "blue"},
+                { keys: ['b/4'], duration: 4, type: 'r' },
+                { keys: ['b/4'], duration: 4, type: 'r' }
+        ] },
+        { notes: [
+                { keys: ['b/4'], duration: 4, type: 'r' },
+                { keys: ['b/4'], duration: 4, type: 'r' },
+                { keys: ['b/4'], duration: 4, type: 'r' },
+                { keys: ['b/4'], duration: 4, type: 'r' }
+        ] },
+        { notes: [
+                { keys: ['b/4'], duration: 4, type: 'r' },
+                { keys: ['b/4'], duration: 4, type: 'r' },
+                { keys: ['b/4'], duration: 4, type: 'r' },
+                { keys: ['b/4'], duration: 4, type: 'r' }
+        ] },
+        { notes: [
+                { keys: ['b/4'], duration: 4, type: 'r' },
+                { keys: ['b/4'], duration: 4, type: 'r' },
+                { keys: ['b/4'], duration: 4, type: 'r' },
                 { keys: ['b/4'], duration: 4, type: 'r' }
         ] }
     ],
@@ -35,6 +53,9 @@ export var demoScore : Score = {
                 { keys: ['b/4'], duration: 4, type: 'r' },
                 { keys: ['b/4'], duration: 32},
                 { keys: ['b/4'], duration: 32},
+                { keys: ['b/4'], duration: 32, type: 'r' },
+                { keys: ['b/4'], duration: 32, type: 'r' },
+                { keys: ['b/4'], duration: 32, type: 'r' },
                 { keys: ['b/4'], duration: 32, type: 'r' },
                 { keys: ['b/4'], duration: 32, type: 'r' },
                 { keys: ['b/4'], duration: 32, type: 'r' }
