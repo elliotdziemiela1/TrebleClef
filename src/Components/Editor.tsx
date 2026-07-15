@@ -9,7 +9,7 @@ import { HISTORY_SIZE } from '../EditorPage';
 type EditorScore = { 
 	score: Score, // the musical score
 	measureNoteLocations: number[][], // the x locations of each note within it's effect measure 
-	selectedNoteIdx: number[] | undefined // the index of the currently selected note
+	selectedNoteIdx: number[] | undefined // the index of the currently selected note [measure, position]
 }
 
 interface EditorProps {
@@ -136,7 +136,7 @@ export default function Editor({ historySize } : EditorProps) {
 		return false;
 	}
 
-	function changeNote(position : number[], newKey : string) {
+	function changeNoteKey(position : number[], newKey : string) {
 		const newEditorScore : EditorScore = structuredClone(editorScores[historyIndex]);
 		newEditorScore.score.measures[position[0]].notes[position[1]].keys[0] = newKey;
 		editorScoresReducer(newEditorScore);
@@ -149,6 +149,91 @@ export default function Editor({ historySize } : EditorProps) {
 				renderScore(scoreContainerRef.current, editorScores[historyIndex].score);
 			}
 	}, [editorScores, historyIndex]);
+
+	function changeNoteDuration(duration : number, noteType?: string){
+		if (editorScores[historyIndex].selectedNoteIdx) {
+			const currentNotes : Note[]  = editorScores[historyIndex].score.measures[editorScores[historyIndex].selectedNoteIdx[0]].notes;	
+			const currentNote : Note = currentNotes[editorScores[historyIndex].selectedNoteIdx[1]]
+			const durationDiff = 1/(duration as Duration) - 1/currentNote.duration;
+			const newScore : EditorScore = structuredClone(editorScores[historyIndex])
+			const newMeasure : Measure = newScore.score.measures[newScore.selectedNoteIdx![0]];
+			if (durationDiff > 0){ // if the new duration is larger than the old duration
+				let runningDuration :  number = 0;
+				let i = 0; 
+				// calculate the sum of the previous notes durations in the measure
+				for (i = 0; i < editorScores[historyIndex].selectedNoteIdx[1]; i++){
+					runningDuration += 1/newMeasure.notes[i].duration;
+					if ((1 - runningDuration) < (1/(duration as Duration))){ // if previous duration is too great to fit requested note change
+						break;
+					}
+				}
+				// if loop didn't finish, meaning there's not enough space in the rest of the measure for this note
+				// and i == the index of the first note that the requested duration change cannot be at
+				if (i < editorScores[historyIndex].selectedNoteIdx[1]){ 
+					// remove duration of the note we are changing from the running duration
+					runningDuration -= 1/newMeasure.notes[i].duration;
+				}
+				// the note index i may point to a note before the one that was selected to be changed. This is the behavior of this
+				// function. It rewrites the measure to fit the new change by deleting notes before or after it.
+				runningDuration += 1/(duration as Duration);
+
+				// change to the new duration
+				newScore.score.measures[newScore.selectedNoteIdx![0]].notes[i].duration = (duration as Duration);
+				// change to new type 
+				newScore.score.measures[newScore.selectedNoteIdx![0]].notes[i].type = noteType ?? undefined;
+				// change to blue
+				newScore.score.measures[newScore.selectedNoteIdx![0]].notes[i].color = "blue";
+				if (noteType == 'r')
+					newScore.score.measures[newScore.selectedNoteIdx![0]].notes[i].keys = ["b/4"]
+				// set new selected note to the note that was changed
+				newScore.selectedNoteIdx = [newScore.selectedNoteIdx![0], i];
+				
+				// for each note after the changed note, check if it still fits in the measure. If not, recurse by breaking it in half 
+				// until it fits or hits 32nd notes, at which point it will be deleted if it still doesn't fit.
+				for (let j = newMeasure.notes.length - 1; j > i; j--){
+					console.log("j: " + j)
+					debugger
+					runningDuration += 1/newMeasure.notes[j].duration;
+					if (runningDuration > 1){ // if this note doesn't fit in the measure anymore
+						if (newMeasure.notes[j].duration == 32){ // if this note is already a 32nd note, delete it 
+							newScore.score.measures[newScore.selectedNoteIdx![0]].notes = newScore.score.measures[newScore.selectedNoteIdx![0]].notes.slice(0, j)
+								.concat(newScore.score.measures[newScore.selectedNoteIdx![0]].notes.slice(j + 1));
+						} else {
+							// undo increase to duration
+							runningDuration -= 1/newMeasure.notes[j].duration;
+							// if the note is not a 32nd note, break it in half
+							const newNote : Note = {keys: newMeasure.notes[j].keys, duration: (newMeasure.notes[j].duration * 2) as Duration, type: newMeasure.notes[j].type};
+							newScore.score.measures[newScore.selectedNoteIdx![0]].notes = [
+								...newScore.score.measures[newScore.selectedNoteIdx![0]].notes.slice(0, j),
+								structuredClone(newNote),
+								structuredClone(newNote),
+								...newScore.score.measures[newScore.selectedNoteIdx![0]].notes.slice(j + 1)
+							];
+							j += 2; // recheck this note in the next iteration
+						}
+					}
+				}
+			} else { // else new duration is less than old duration
+				// The number of notes we will insert
+				const numberOfInsertedRests = (1/currentNote.duration) / (1/(duration as Duration)) - 1;
+				const newNote : Note = {keys: currentNote.keys, duration: duration as Duration, color: "blue", type: noteType ?? undefined};
+				if (noteType == 'r')
+					newNote.keys = ["b/4"]
+				const newRest : Note = {keys: currentNote.keys, duration: duration as Duration, type: 'r'};
+				const newNotes : Note[] = [structuredClone(newNote)]
+				for (let i = 0; i < numberOfInsertedRests; i++){
+					newNotes.push(structuredClone(newRest))
+				}
+
+				newScore.score.measures[newScore.selectedNoteIdx![0]].notes = [
+					...newScore.score.measures[newScore.selectedNoteIdx![0]].notes.slice(0, newScore.selectedNoteIdx![1]),
+					...newNotes,
+					...newScore.score.measures[newScore.selectedNoteIdx![0]].notes.slice(newScore.selectedNoteIdx![1] + 1)
+				];
+			}
+			editorScoresReducer(newScore);
+		}
+	}
 
 	const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
 		// handle note deletion
@@ -170,14 +255,14 @@ export default function Editor({ historySize } : EditorProps) {
 				if (editorScores[historyIndex].selectedNoteIdx) {
 					currentKey = editorScores[historyIndex].score.measures[editorScores[historyIndex].selectedNoteIdx[0]].notes[editorScores[historyIndex].selectedNoteIdx[1]].keys[0];
 					currentKey = buttonName + currentKey.slice(1,3);
-					changeNote(editorScores[historyIndex].selectedNoteIdx, currentKey)
+					changeNoteKey(editorScores[historyIndex].selectedNoteIdx, currentKey)
 				}
 				break;
 			case("octave"):
 				if (editorScores[historyIndex].selectedNoteIdx) {
 					currentKey = editorScores[historyIndex].score.measures[editorScores[historyIndex].selectedNoteIdx[0]].notes[editorScores[historyIndex].selectedNoteIdx[1]].keys[0];
 					currentKey = currentKey.slice(0,2) + buttonName;
-					changeNote(editorScores[historyIndex].selectedNoteIdx, currentKey)
+					changeNoteKey(editorScores[historyIndex].selectedNoteIdx, currentKey)
 				}
 				break;
 			case("measures"):
@@ -191,85 +276,10 @@ export default function Editor({ historySize } : EditorProps) {
 				editorScoresReducer(newEditorScore);
 				break;
 			case("notes"):
-			debugger
-				if (editorScores[historyIndex].selectedNoteIdx) {
-					// no need to check for validity. Button will be disabled if invalid.
-					const currentNotes : Note[]  = editorScores[historyIndex].score.measures[editorScores[historyIndex].selectedNoteIdx[0]].notes;	
-					const currentNote : Note = currentNotes[editorScores[historyIndex].selectedNoteIdx[1]]
-					const durationDiff = 1/(buttonName as Duration) - 1/currentNote.duration;
-					const newScore : EditorScore = structuredClone(editorScores[historyIndex])
-					const newMeasure : Measure = newScore.score.measures[newScore.selectedNoteIdx![0]];
-					if (durationDiff > 0){ // if the new duration is larger than the old duration
-						let runningDuration :  number = 0;
-						let i = 0; 
-						// calculate the sum of the previous notes durations in the measure
-						for (i = 0; i < editorScores[historyIndex].selectedNoteIdx[1]; i++){
-							runningDuration += 1/newMeasure.notes[i].duration;
-							if ((1 - runningDuration) < (1/(buttonName as Duration))){ // if previous duration is too great to fit requested note change
-								break;
-							}
-						}
-						// if loop didn't finish, meaning there's not enough space in the rest of the measure for this note
-						// and i == the index of the first note that the requested duration change cannot be at
-						if (i < editorScores[historyIndex].selectedNoteIdx[1]){ 
-							// remove duration of the note we are changing from the running duration
-							runningDuration -= 1/newMeasure.notes[i].duration;
-						}
-						// the note index i may point to a note before the one that was selected to be changed. This is the behavior of this
-						// function. It rewrites the measure to fit the new change by deleting notes before or after it.
-						runningDuration += 1/(buttonName as Duration);
-
-						// change to the new duration
-						newScore.score.measures[newScore.selectedNoteIdx![0]].notes[i].duration = (buttonName as Duration);
-						// change to new type 
-						newScore.score.measures[newScore.selectedNoteIdx![0]].notes[i].type = newScore.score.measures[newScore.selectedNoteIdx![0]].notes[newScore.selectedNoteIdx![1]].type;
-						// set new selected note to the note that was changed
-						newScore.selectedNoteIdx = [newScore.selectedNoteIdx![0], i];
-						
-						// for each note after the changed note, check if it still fits in the measure. If not, recurse by breaking it in half 
-						// until it fits or hits 32nd notes, at which point it will be deleted if it still doesn't fit.
-						for (let j = newMeasure.notes.length - 1; j > i; j--){
-							console.log("j: " + j)
-							debugger
-							runningDuration += 1/newMeasure.notes[j].duration;
-							if (runningDuration > 1){ // if this note doesn't fit in the measure anymore
-								if (newMeasure.notes[j].duration == 32){ // if this note is already a 32nd note, delete it 
-									newScore.score.measures[newScore.selectedNoteIdx![0]].notes = newScore.score.measures[newScore.selectedNoteIdx![0]].notes.slice(0, j)
-										.concat(newScore.score.measures[newScore.selectedNoteIdx![0]].notes.slice(j + 1));
-								} else {
-									// undo increase to duration
-									runningDuration -= 1/newMeasure.notes[j].duration;
-									// if the note is not a 32nd note, break it in half
-									const newNote : Note = {keys: newMeasure.notes[j].keys, duration: (newMeasure.notes[j].duration * 2) as Duration, type: newMeasure.notes[j].type};
-									newScore.score.measures[newScore.selectedNoteIdx![0]].notes = [
-										...newScore.score.measures[newScore.selectedNoteIdx![0]].notes.slice(0, j),
-										structuredClone(newNote),
-										structuredClone(newNote),
-										...newScore.score.measures[newScore.selectedNoteIdx![0]].notes.slice(j + 1)
-									];
-									j += 2; // recheck this note in the next iteration
-								}
-							}
-						}
-					} else { // else new duration is less than old duration
-						// The number of notes we will insert
-						const numberOfInsertedRests = (1/currentNote.duration) / (1/(buttonName as Duration)) - 1;
-						const newNote : Note = {keys: currentNote.keys, duration: buttonName as Duration, type: currentNote.type};
-						const newRest : Note = {keys: currentNote.keys, duration: buttonName as Duration, type: 'r'};
-						const newNotes : Note[] = [structuredClone(newNote)]
-						for (let i = 0; i < numberOfInsertedRests; i++){
-							newNotes.push(structuredClone(newRest))
-						}
-
-						newScore.score.measures[newScore.selectedNoteIdx![0]].notes = [
-							...newScore.score.measures[newScore.selectedNoteIdx![0]].notes.slice(0, newScore.selectedNoteIdx![1]),
-							...newNotes,
-							...newScore.score.measures[newScore.selectedNoteIdx![0]].notes.slice(newScore.selectedNoteIdx![1] + 1)
-						];
-					}
-					debugger
-					editorScoresReducer(newScore);
-				}
+				changeNoteDuration(buttonName as number);
+				break;
+			case("rests"):
+				changeNoteDuration(buttonName as number, 'r');
 				break;
 		}
 		
@@ -308,14 +318,16 @@ function EditorControls({ buttonPressCallback, editorScore, historyIndex } : Edi
 					<p>Pitch: </p>
 					{noteNames.map((name : string, idx : number) => {
 						return (<button key={idx} onClick={() => buttonPressCallback(name, "pitch")} disabled={ !!editorScore.selectedNoteIdx?.length &&
-						(editorScore.score.measures[editorScore.selectedNoteIdx[0]].notes[editorScore.selectedNoteIdx[1]].keys[0][0] == name)}>{name}</button>)
+						((editorScore.score.measures[editorScore.selectedNoteIdx[0]].notes[editorScore.selectedNoteIdx[1]].keys[0][0] == name) ||
+						(editorScore.score.measures[editorScore.selectedNoteIdx[0]].notes[editorScore.selectedNoteIdx[1]].type == 'r'))}>{name}</button>)
 					})}
 				</div>
 				<div className={styles['octave-container']}>
 					<p>Octave: </p>
 					{octaveLevels.map((num : number, idx : number) => {
 						return (<button key={idx} onClick={() => buttonPressCallback(num.toString(), "octave")} disabled={ !!editorScore.selectedNoteIdx?.length &&
-						editorScore.score.measures[editorScore.selectedNoteIdx[0]].notes[editorScore.selectedNoteIdx[1]].keys[0][2] == num.toString()}>{num}</button>)
+						((editorScore.score.measures[editorScore.selectedNoteIdx[0]].notes[editorScore.selectedNoteIdx[1]].keys[0][2] == num.toString()) ||
+						(editorScore.score.measures[editorScore.selectedNoteIdx[0]].notes[editorScore.selectedNoteIdx[1]].type == 'r'))}>{num}</button>)
 					})}						
 				</div>
 				<div className={styles['measures-container']}>
@@ -330,6 +342,14 @@ function EditorControls({ buttonPressCallback, editorScore, historyIndex } : Edi
 							(editorScore.score.measures[editorScore.selectedNoteIdx[0]].notes[editorScore.selectedNoteIdx[1]].type != 'r')
 						}>
 							<p style={{fontFamily: 'Bravura', fontSize: '24px'}}>{noteUpGlyphs[idx]}</p>
+						</button>
+					)}
+					{durations.map((duration : number, idx: number) =>
+						<button onClick={() => buttonPressCallback(duration, "rests")} key={idx} disabled={!!editorScore.selectedNoteIdx?.length &&
+							(editorScore.score.measures[editorScore.selectedNoteIdx[0]].notes[editorScore.selectedNoteIdx[1]].duration == duration) &&
+							(editorScore.score.measures[editorScore.selectedNoteIdx[0]].notes[editorScore.selectedNoteIdx[1]].type == 'r')
+						}>
+							<p style={{fontFamily: 'Bravura', fontSize: '24px'}}>{restGlyphs[idx]}</p>
 						</button>
 					)}
 				</div>
