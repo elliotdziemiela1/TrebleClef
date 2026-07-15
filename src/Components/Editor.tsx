@@ -219,7 +219,7 @@ export default function Editor({ historySize } : EditorProps) {
 				const newNote : Note = {keys: currentNote.keys, duration: duration as Duration, color: "blue", type: noteType ?? undefined};
 				if (noteType == 'r')
 					newNote.keys = ["b/4"]
-				const newRest : Note = {keys: currentNote.keys, duration: duration as Duration, type: 'r'};
+				const newRest : Note = {keys: ['b/4'], duration: duration as Duration, type: 'r'};
 				const newNotes : Note[] = [structuredClone(newNote)]
 				for (let i = 0; i < numberOfInsertedRests; i++){
 					newNotes.push(structuredClone(newRest))
