@@ -4,20 +4,27 @@ import type { Note, Score } from './score';
 export const pixelsPerStaveY = 170;
 export const staveStartX = 0;
 export const staveStartY = 50;
-export const pixelsPerMeasureX = 270;
+// responsive measure sizing 
 export const measuresPerStave = 4;
-export const clefPadding = 30; // the number of extra pixels added to the width of a measure to 
 // include a clef
-export const rendererWidth = pixelsPerMeasureX * measuresPerStave + clefPadding;
 export const baseHeight = 2 * pixelsPerStaveY; 
 export const measureWidthPadding = 20;
 export const spacingBetweenLines = 10;
 export const ledgerWidth = 36; // the width of the ledger lines that are drawn for notes above or below the staff
 export const maxNoteFontSize = 38;
-export const effectiveMeasureWidth = pixelsPerMeasureX - measureWidthPadding;
+export const BASELINE_PIXELS_PER_MEASURE = 300; 
+
+export const responsiveRendererVariables = {
+    clefPadding: 30,
+    pixelsPerMeasureX: BASELINE_PIXELS_PER_MEASURE,
+    rendererWidth: BASELINE_PIXELS_PER_MEASURE * measuresPerStave + 30,
+    maxNoteFontSize : 38,
+    effectiveMeasureWidth: BASELINE_PIXELS_PER_MEASURE - measureWidthPadding,
+}
+export const effectiveMeasureWidth = responsiveRendererVariables.pixelsPerMeasureX - measureWidthPadding;
 
 export const idxOfRestGlyphs = 6;
-
+    
 export const glyphs = {
     noteUpGlyphs: {
         wholeNoteGlyph: "\uE1D2", 
@@ -44,17 +51,18 @@ export const glyphs = {
     quarterNoteGlyph: "\uE0A4"
 }
 
+
 export function calcNoteFontSize(duration: number): number {
     switch (duration) {
-        case 8: return maxNoteFontSize * 0.92;
-        case 16: return maxNoteFontSize * 0.86;
-        case 32: return maxNoteFontSize * 0.42;
-        default: return maxNoteFontSize;
+        case 8: return responsiveRendererVariables.maxNoteFontSize * 0.92;
+        case 16: return responsiveRendererVariables.maxNoteFontSize * 0.86;
+        case 32: return responsiveRendererVariables.maxNoteFontSize * 0.42;
+        default: return responsiveRendererVariables.maxNoteFontSize;
     }
 }
 
 export function calcNoteWidth(duration: number): number {
-    return effectiveMeasureWidth / duration
+    return responsiveRendererVariables.effectiveMeasureWidth / duration
 }
 
 // returns the difference between two notes' pitches. returns pitch1 - pitch2.
@@ -76,24 +84,25 @@ export function renderScore(container: HTMLDivElement, score: Score) {
 	container.innerHTML = ''; // VexFlow can't update in place — clear and redraw
 	const renderer = new Renderer(container, Renderer.Backends.SVG);
 
-	renderer.resize(rendererWidth + 1, pixelsPerStaveY);
+    debugger
+	renderer.resize(responsiveRendererVariables.rendererWidth + 1, pixelsPerStaveY);
 	const ctx = renderer.getContext();
 
 
 	
 	for (let i = 0 ; i < score.measures.length; i++) {
 		if (i % 4 === 0){
-			renderer.resize(rendererWidth + 1, pixelsPerStaveY * (Math.floor(i / 4) + 1));
+			renderer.resize(responsiveRendererVariables.rendererWidth + 1, pixelsPerStaveY * (Math.floor(i / 4) + 1));
 		}
-		const measureStartX = (i % 4 * pixelsPerMeasureX) + clefPadding + staveStartX;
+		const measureStartX = (i % 4 * responsiveRendererVariables.pixelsPerMeasureX) + responsiveRendererVariables.clefPadding + staveStartX;
 		const measureStartY = pixelsPerStaveY * Math.floor(i / 4) + staveStartY;
-		const stave = new Stave(measureStartX, measureStartY, pixelsPerMeasureX, {spacingBetweenLinesPx: spacingBetweenLines});
+		const stave = new Stave(measureStartX, measureStartY, responsiveRendererVariables.pixelsPerMeasureX, {spacingBetweenLinesPx: spacingBetweenLines});
 		let x = measureStartX + (measureWidthPadding / 2) ;
 		let y = measureStartY + 1 + (spacingBetweenLines * 6);
 		if (i % 4 === 0) {
-			stave.addClef(score.clef);
-			stave.setX(measureStartX - clefPadding);
-			stave.setWidth(pixelsPerMeasureX + clefPadding)
+			stave.addClef(score.clef, responsiveRendererVariables.clefPadding < 21 ? "small": 'default');
+			stave.setX(measureStartX - responsiveRendererVariables.clefPadding);
+			stave.setWidth(responsiveRendererVariables.pixelsPerMeasureX + responsiveRendererVariables.clefPadding)
 		}
 		stave.setContext(ctx).draw();
 

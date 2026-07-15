@@ -14,16 +14,54 @@
 }
 
 .editor-controls {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
     gap: 10px;
-    .score-buttons, .history-and-file-buttons{
+    padding: 8px 6px;
+
+    .score-buttons, .history-and-file-buttons {
         display: flex;
+        flex-wrap: wrap;
         justify-content: center;
         flex-direction: row;
         align-items: center;
-        gap: 2px;
+        gap: clamp(4px, 1vw, 8px);
     }
     .score-buttons {
-        gap: 20px;
-        
+        gap: clamp(8px, 2vw, 20px);
+    }
+
+    .pitch-container, .octave-container, .measures-container, .notes-and-rests-container {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+
+        p {
+            margin: 0;
+            white-space: nowrap;
+        }
+    }
+
+    button {
+        font-size: clamp(0.75rem, 1.4vw, 1rem);
+        padding: clamp(3px, 0.8vw, 8px) clamp(6px, 1.2vw, 12px);
+    }
+
+    .glyph {
+        font-family: 'Bravura', serif;
+        font-size: clamp(14px, 2.5vw, 24px);
+        margin: 0;
+    }
+
+    @media (max-width: 600px) {
+        gap: 6px;
+        padding: 6px 4px;
+
+        .score-buttons {
+            gap: 6px;
+        }
     }
 }

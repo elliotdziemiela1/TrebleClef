@@ -1,9 +1,9 @@
 import styles from './Editor.module.scss';
-import { useRef, useLayoutEffect, useReducer, useMemo } from 'react';
-import { calcNoteWidth, clefPadding, renderScore, glyphs } from '../engine/renderer';
+import { useRef, useLayoutEffect, useReducer, useMemo, useEffect } from 'react';
+import { calcNoteWidth, renderScore, glyphs, measuresPerStave, BASELINE_PIXELS_PER_MEASURE } from '../engine/renderer';
 import { emptyScore, type Score, type Note, type Measure, type Duration } from '../engine/score';
-import { pixelsPerMeasureX, pixelsPerStaveY, staveStartX,  
-	rendererWidth, measureWidthPadding } from '../engine/renderer'; // Will use these soon
+import { responsiveRendererVariables, pixelsPerStaveY, staveStartX,  
+	measureWidthPadding } from '../engine/renderer'; // Will use these soon
 import { HISTORY_SIZE } from '../EditorPage';
 
 type EditorScore = { 
@@ -65,6 +65,7 @@ export default function Editor({ historySize } : EditorProps) {
 	}, [])
 
 	const scoreContainerRef = useRef<HTMLDivElement>(null);
+	const editorContainerRef = useRef<HTMLDivElement>(null);
 	
 	// index into history of scores. historySize-1 = latest score, 0 = oldest score.
 	const [ historyIndex, historyIndexDispatch ] = useReducer((state, action) => {
@@ -76,14 +77,19 @@ export default function Editor({ historySize } : EditorProps) {
 	}, historySize-1);
 	
 	// array for current EditorScore and it's history. First element is oldest, last is newest.
-	const [ editorScores, editorScoresReducer ] = useReducer((state : EditorScore[], action : EditorScore) => {
+	const [ editorScores, editorScoresReducer ] = useReducer((state : EditorScore[], action : { editorScore: EditorScore, update: boolean }) => {
 		// move to newly created score frame
 		historyIndexDispatch(historySize-1); 
 
 		// update x locations of notes in the new score
-		action.measureNoteLocations = getMeasureNoteXLocations(action.score);
-		// delete oldest EditorScore, and push newest EditorScore
-		return [...state.slice(1,historySize), action];
+		action.editorScore.measureNoteLocations = getMeasureNoteXLocations(action.editorScore.score);
+		if (action.update == false) {
+			// delete oldest EditorScore, and push newest EditorScore
+			return [...state.slice(1,historySize), action.editorScore];
+		} else {
+			// delete newest EditorScore, and push newest EditorScore
+			return [...state.slice(0,historySize-1), action.editorScore];
+		}
 	}, initialEditorScoresHistory as EditorScore[]);
 	
 	
@@ -95,7 +101,7 @@ export default function Editor({ historySize } : EditorProps) {
 			newEditorScore.score.measures[newEditorScore.selectedNoteIdx[0]].notes[newEditorScore.selectedNoteIdx[1]].color = "black";
 		newEditorScore.selectedNoteIdx = newIdx;
 		newEditorScore.score.measures[newIdx[0]].notes[newIdx[1]].color = "blue";
-		editorScoresReducer(newEditorScore);
+		editorScoresReducer({ editorScore: newEditorScore, update: false });
 	}
 
 	// delete a note in the current score
@@ -103,21 +109,23 @@ export default function Editor({ historySize } : EditorProps) {
 		const newEditorScore : EditorScore = structuredClone(editorScores[historyIndex]);
 		newEditorScore.score.measures[idx[0]].notes[idx[1]].type = 'r';
 		newEditorScore.score.measures[idx[0]].notes[idx[1]].keys = ['b/4'];
-		editorScoresReducer(newEditorScore);
+		editorScoresReducer({ editorScore: newEditorScore, update: false });
 	}
 
 	// function called when the score container is clicked. It determines which note was clicked on and updates the selectedNoteIdx state accordingly.
 	const selectNote = (event: React.MouseEvent<HTMLDivElement>) : boolean => {
 		if (!scoreContainerRef.current)
 			return false;
-		const boundingRect = scoreContainerRef.current.getBoundingClientRect();
+		const boundingRect = scoreContainerRef.current.getBoundingClientRect();	
 		debugger
-		const scoreLeft = boundingRect.left + staveStartX + 7; // 7 is a fudge factor to account for the clef and stave padding
+		// 7px is a fudge factor to account for the clef and stave padding.
+		const clefFudgeFactor = 7 * (responsiveRendererVariables.pixelsPerMeasureX / BASELINE_PIXELS_PER_MEASURE);
+		const scoreLeft = boundingRect.left + staveStartX + clefFudgeFactor;
 		const scoreTop = boundingRect.top;
 		for (let i = 0; i < editorScores[historyIndex].score.measures.length; i++){
 			// console.log("i: " + i)
-			const measureLeft = scoreLeft + clefPadding + (i%4 * pixelsPerMeasureX);
-			const measureRight = measureLeft + pixelsPerMeasureX;
+			const measureLeft = scoreLeft + responsiveRendererVariables.clefPadding + (i%4 * responsiveRendererVariables.pixelsPerMeasureX);
+			const measureRight = measureLeft + responsiveRendererVariables.pixelsPerMeasureX;
 			const effectiveMeasureLeft = measureLeft + measureWidthPadding / 2;
 			const measureTop = scoreTop + Math.floor(i/4) * pixelsPerStaveY; 
 			const measureBottom = measureTop + pixelsPerStaveY;
@@ -138,8 +146,59 @@ export default function Editor({ historySize } : EditorProps) {
 	function changeNoteKey(position : number[], newKey : string) {
 		const newEditorScore : EditorScore = structuredClone(editorScores[historyIndex]);
 		newEditorScore.score.measures[position[0]].notes[position[1]].keys[0] = newKey;
-		editorScoresReducer(newEditorScore);
+		editorScoresReducer({ editorScore: newEditorScore, update: false });
 	}
+
+	// keep refs in sync so the ResizeObserver callback below never reads stale state
+	const editorScoresRef = useRef(editorScores);
+	const historyIndexRef = useRef(historyIndex);
+	useEffect(() => {
+		editorScoresRef.current = editorScores;
+		historyIndexRef.current = historyIndex;
+	}, [editorScores, historyIndex]);
+
+	useEffect(() => {
+		// resizes the renderer based on the editor container's own width.
+		// A ResizeObserver reacts to actual layout box changes of the element itself.
+		function applyResponsiveBreakpoints(containerWidth: number) {
+			if (containerWidth < 600) { // 0-600
+				responsiveRendererVariables.pixelsPerMeasureX = 60;
+				responsiveRendererVariables.maxNoteFontSize = 18;
+				responsiveRendererVariables.clefPadding = 16;
+			} else if (containerWidth < 1440) { // 600-1440
+				responsiveRendererVariables.pixelsPerMeasureX = 124;
+				responsiveRendererVariables.maxNoteFontSize = 28;
+				responsiveRendererVariables.clefPadding = 28;
+			} else if (containerWidth < 1920) { // 1440-1920
+				responsiveRendererVariables.pixelsPerMeasureX = 270;
+				responsiveRendererVariables.maxNoteFontSize = 38;
+				responsiveRendererVariables.clefPadding = 30;
+			} else { // 1920+
+				responsiveRendererVariables.pixelsPerMeasureX = BASELINE_PIXELS_PER_MEASURE;
+				responsiveRendererVariables.maxNoteFontSize = 38;
+				responsiveRendererVariables.clefPadding = 32;
+			}
+			responsiveRendererVariables.rendererWidth = responsiveRendererVariables.pixelsPerMeasureX * measuresPerStave + responsiveRendererVariables.clefPadding;
+			responsiveRendererVariables.effectiveMeasureWidth = responsiveRendererVariables.pixelsPerMeasureX - measureWidthPadding;
+
+			const currentEditorScore = editorScoresRef.current[historyIndexRef.current];
+			if (scoreContainerRef.current) {
+				renderScore(scoreContainerRef.current, currentEditorScore.score);
+			}
+			editorScoresReducer({ editorScore: structuredClone(currentEditorScore), update: true });
+		}
+
+		if (!editorContainerRef.current) return;
+
+		const resizeObserver = new ResizeObserver((entries) => {
+			for (const entry of entries) {
+				applyResponsiveBreakpoints(entry.contentRect.width);
+			}
+		});
+		resizeObserver.observe(editorContainerRef.current);
+
+		return () => resizeObserver.disconnect();
+	}, []);
 
 
 	// rerender score when it changes, or history index changes
@@ -183,6 +242,8 @@ export default function Editor({ historySize } : EditorProps) {
 				newScore.score.measures[newScore.selectedNoteIdx![0]].notes[i].duration = (duration as Duration);
 				// change to new type 
 				newScore.score.measures[newScore.selectedNoteIdx![0]].notes[i].type = noteType ?? undefined;
+				// change previous note to black
+				newScore.score.measures[newScore.selectedNoteIdx![0]].notes[newScore.selectedNoteIdx![1]].color = "black";
 				// change to blue
 				newScore.score.measures[newScore.selectedNoteIdx![0]].notes[i].color = "blue";
 				if (noteType == 'r')
@@ -233,7 +294,7 @@ export default function Editor({ historySize } : EditorProps) {
 					...newScore.score.measures[newScore.selectedNoteIdx![0]].notes.slice(newScore.selectedNoteIdx![1] + 1)
 				];
 			}
-			editorScoresReducer(newScore);
+			editorScoresReducer({ editorScore: newScore, update: false });
 		}
 	}
 
@@ -275,7 +336,7 @@ export default function Editor({ historySize } : EditorProps) {
 					newEditorScore.score.measures.pop();
 					newEditorScore.selectedNoteIdx = undefined; // deselect note if the measure it was in was deleted
 				}
-				editorScoresReducer(newEditorScore);
+				editorScoresReducer({ editorScore: newEditorScore, update: false });
 				break;
 			case("notes"):
 				noteChangeStartTime.current = Date.now();
@@ -290,11 +351,11 @@ export default function Editor({ historySize } : EditorProps) {
 	}
 	
 	return (
-		<div className={styles.container} onKeyDown={handleKeyDown} tabIndex={0}>
+		<div ref={editorContainerRef} className={styles.container} onKeyDown={handleKeyDown} tabIndex={0}>
 			<div className={styles['controls-div']} >
 				<EditorControls buttonPressCallback={controlButtonHandler} editorScore={editorScores[historyIndex]} historyIndex={historyIndex}/>
 			</div>
-			<div ref={scoreContainerRef} style={{width: rendererWidth, margin: "auto"}} className={styles['score-container']} onClick={selectNote}>
+			<div ref={scoreContainerRef} style={{width: responsiveRendererVariables.rendererWidth, margin: "auto"}} className={styles['score-container']} onClick={selectNote}>
 				
 			</div>
 		</div>
@@ -340,22 +401,22 @@ function EditorControls({ buttonPressCallback, editorScore, historyIndex } : Edi
 					<button onClick={() => buttonPressCallback("-", "measures")} disabled={editorScore.score.measures.length <= 1}>-</button>					
 				</div>
 				<div className={styles['notes-and-rests-container']}>
-					// played note buttons
+					{/* played note buttons */}
 					{durations.map((duration : number, idx: number) =>
 						<button onClick={() => buttonPressCallback(duration, "notes")} key={idx} disabled={!!editorScore.selectedNoteIdx?.length &&
 							(editorScore.score.measures[editorScore.selectedNoteIdx[0]].notes[editorScore.selectedNoteIdx[1]].duration == duration) &&
 							(editorScore.score.measures[editorScore.selectedNoteIdx[0]].notes[editorScore.selectedNoteIdx[1]].type != 'r')
 						}>
-							<p style={{fontFamily: 'Bravura', fontSize: '24px'}}>{noteUpGlyphs[idx]}</p>
+							<p className={styles.glyph}>{noteUpGlyphs[idx]}</p>
 						</button>
 					)}
-					// rest buttons
+					{/* rest buttons */}
 					{durations.map((duration : number, idx: number) =>
 						<button onClick={() => buttonPressCallback(duration, "rests")} key={idx} disabled={!!editorScore.selectedNoteIdx?.length &&
 							(editorScore.score.measures[editorScore.selectedNoteIdx[0]].notes[editorScore.selectedNoteIdx[1]].duration == duration) &&
 							(editorScore.score.measures[editorScore.selectedNoteIdx[0]].notes[editorScore.selectedNoteIdx[1]].type == 'r')
 						}>
-							<p style={{fontFamily: 'Bravura', fontSize: '24px'}}>{restGlyphs[idx]}</p>
+							<p className={styles.glyph}>{restGlyphs[idx]}</p>
 						</button>
 					)}
 				</div>
