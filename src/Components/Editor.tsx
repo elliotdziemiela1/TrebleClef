@@ -1,7 +1,7 @@
 import styles from './Editor.module.scss';
 import { useRef, useLayoutEffect, useReducer, useMemo } from 'react';
 import { calcNoteWidth, clefPadding, renderScore, glyphs } from '../engine/renderer';
-import { demoScore, emptyScore, type Score, type Note, type Measure, type Duration } from '../engine/score';
+import { emptyScore, type Score, type Note, type Measure, type Duration } from '../engine/score';
 import { pixelsPerMeasureX, pixelsPerStaveY, staveStartX,  
 	rendererWidth, measureWidthPadding } from '../engine/renderer'; // Will use these soon
 import { HISTORY_SIZE } from '../EditorPage';
