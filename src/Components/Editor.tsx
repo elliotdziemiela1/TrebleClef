@@ -252,17 +252,20 @@ export default function Editor({ historySize } : EditorProps) {
 							}
 						}
 					} else { // else new duration is less than old duration
-						// break the note into smaller notes until the broken down notes have the desired duration of (buttonName as Duration).
-						for (let dur = (buttonName as Duration); dur < currentNote.duration; dur *= 2){
-							debugger
-							const newNote : Note = {keys: [...currentNote.keys], duration: dur, type: currentNote.type};
-							newScore.score.measures[newScore.selectedNoteIdx![0]].notes = [
-								...newScore.score.measures[newScore.selectedNoteIdx![0]].notes.slice(0, newScore.selectedNoteIdx![1]),
-								{...newNote},
-								{...newNote},
-								...newScore.score.measures[newScore.selectedNoteIdx![0]].notes.slice(newScore.selectedNoteIdx![1] + 1)
-							];
+						// The number of notes we will insert
+						const numberOfInsertedRests = (1/currentNote.duration) / (1/(buttonName as Duration)) - 1;
+						const newNote : Note = {keys: currentNote.keys, duration: buttonName as Duration, type: currentNote.type};
+						const newRest : Note = {keys: currentNote.keys, duration: buttonName as Duration, type: 'r'};
+						const newNotes : Note[] = [structuredClone(newNote)]
+						for (let i = 0; i < numberOfInsertedRests; i++){
+							newNotes.push(structuredClone(newRest))
 						}
+
+						newScore.score.measures[newScore.selectedNoteIdx![0]].notes = [
+							...newScore.score.measures[newScore.selectedNoteIdx![0]].notes.slice(0, newScore.selectedNoteIdx![1]),
+							...newNotes,
+							...newScore.score.measures[newScore.selectedNoteIdx![0]].notes.slice(newScore.selectedNoteIdx![1] + 1)
+						];
 					}
 					debugger
 					editorScoresReducer(newScore);
