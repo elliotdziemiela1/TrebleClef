@@ -17,8 +17,8 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 10px;
-    padding: 8px 6px;
+    gap: 6px;
+    padding: 8px 6px 0px 6px;
 
     .score-buttons, .history-and-file-buttons {
         display: flex;
@@ -26,10 +26,10 @@
         justify-content: center;
         flex-direction: row;
         align-items: center;
-        gap: clamp(4px, 1vw, 8px);
+        gap: inherit;
     }
     .score-buttons {
-        gap: clamp(8px, 2vw, 20px);
+        gap: inherit;
     }
 
     .pitch-container, .octave-container, .measures-container, .notes-and-rests-container {
@@ -37,7 +37,7 @@
         flex-wrap: wrap;
         align-items: center;
         justify-content: center;
-        gap: 4px;
+        gap: inherit;
 
         p {
             margin: 0;
@@ -46,22 +46,51 @@
     }
 
     button {
-        font-size: clamp(0.75rem, 1.4vw, 1rem);
-        padding: clamp(3px, 0.8vw, 8px) clamp(6px, 1.2vw, 12px);
+        font-size: 1rem;
+        padding: 6px 6px 0px 6px;
     }
 
     .glyph {
         font-family: 'Bravura', serif;
-        font-size: clamp(14px, 2.5vw, 24px);
+        font-size: 1rem;
         margin: 0;
     }
 
-    @media (max-width: 600px) {
-        gap: 6px;
-        padding: 6px 4px;
+    @media (max-width: 1024px) {
+        gap: inherit;
+        padding: 8px 6px 0px 6px;
 
+        .history-and-file-buttons {
+            gap: inherit;
+        }
         .score-buttons {
-            gap: 6px;
+            gap: inherit;
+        }
+        button {
+            font-size: 0.875rem;
+            padding: 6px 6px 0px 6px;
+        }
+        .glyph {
+            font-size: 20px;
+        }
+    }
+
+    @media (max-width: 600px) {
+        gap: inherit;
+        padding: 6px 4px 0px 4px;
+
+        .history-and-file-buttons {
+            gap: inherit;
+        }
+        .score-buttons {
+            gap: inherit;
+        }
+        button {
+            font-size: 0.75rem;
+            padding: 3px 3px 0px 3px;
+        }
+        .glyph {
+            font-size: 12px;
         }
     }
 }

@@ -401,6 +401,7 @@ function EditorControls({ buttonPressCallback, editorScore, historyIndex } : Edi
 					<button onClick={() => buttonPressCallback("-", "measures")} disabled={editorScore.score.measures.length <= 1}>-</button>					
 				</div>
 				<div className={styles['notes-and-rests-container']}>
+					<p>Durations: </p>
 					{/* played note buttons */}
 					{durations.map((duration : number, idx: number) =>
 						<button onClick={() => buttonPressCallback(duration, "notes")} key={idx} disabled={!!editorScore.selectedNoteIdx?.length &&
