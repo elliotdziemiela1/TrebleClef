@@ -1,6 +1,6 @@
 import { Nav, Navbar } from "react-bootstrap";
 import './App.module.scss'
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Link } from "react-router-dom";
 import Home from "./home.tsx";
 import EditorPage from "./EditorPage.tsx";
 
@@ -10,8 +10,8 @@ function App() {
       <div className="App">
         <Navbar expand="sm" bg="light" >
           <Nav>
-            <Nav.Link href="/">Home</Nav.Link>
-            <Nav.Link href="/editor">Editor</Nav.Link>
+            <Nav.Link as={Link} to="/">Home</Nav.Link>
+            <Nav.Link as={Link} to="/editor">Editor</Nav.Link>
           </Nav>
         </Navbar>
         <Routes>
