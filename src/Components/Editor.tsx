@@ -1,9 +1,9 @@
 import styles from './Editor.module.scss';
-import { useRef, useEffect, useState, useCallback, useLayoutEffect, useReducer, useMemo } from 'react';
-import { calcNoteWidth, clefPadding, effectiveMeasureWidth, renderScore, glyphs } from '../engine/renderer';
+import { useRef, useLayoutEffect, useReducer, useMemo } from 'react';
+import { calcNoteWidth, clefPadding, renderScore, glyphs } from '../engine/renderer';
 import { demoScore, emptyScore, type Score, type Note, type Measure, type Duration } from '../engine/score';
-import { pixelsPerMeasureX, pixelsPerStaveY, staveStartX, staveStartY, 
-	rendererWidth, measuresPerStave, measureWidthPadding } from '../engine/renderer'; // Will use these soon
+import { pixelsPerMeasureX, pixelsPerStaveY, staveStartX,  
+	rendererWidth, measureWidthPadding } from '../engine/renderer'; // Will use these soon
 import { HISTORY_SIZE } from '../EditorPage';
 
 type EditorScore = { 
@@ -49,15 +49,13 @@ function getMeasureNoteXLocations(score : Score) : number[][] {
 	return measureNoteXLocations;
 }
 
-const demoMeasureNoteLocations = getMeasureNoteXLocations(demoScore);
-	
+const demoMeasureNoteLocations = getMeasureNoteXLocations(emptyScore);
 
-//
-//
-//
 export default function Editor({ historySize } : EditorProps) {
+	const noteChangeStartTime = useRef(0);
+
 	const initialEditorScoresHistory = useMemo(() => {
-		return Array.from({length: historySize}, (i, idx) : EditorScore =>{
+		return Array.from({length: historySize}, () : EditorScore =>{
 			return {
 				score: structuredClone(emptyScore),
 				measureNoteLocations: demoMeasureNoteLocations, // array of primitives: no need for deep copy
@@ -146,9 +144,12 @@ export default function Editor({ historySize } : EditorProps) {
 
 	// rerender score when it changes, or history index changes
 	useLayoutEffect(() => {
-			if (scoreContainerRef.current) {
-				renderScore(scoreContainerRef.current, editorScores[historyIndex].score);
-			}
+		if (scoreContainerRef.current) {
+			renderScore(scoreContainerRef.current, editorScores[historyIndex].score);
+		}
+		if (process.env.NODE_ENV === "development"){
+			console.log("time from note change button press to score rendering was: " + (Date.now() - noteChangeStartTime.current).toString() + "ms")
+		}
 	}, [editorScores, historyIndex]);
 
 	function changeNoteDuration(duration : number, noteType?: string){
@@ -277,9 +278,11 @@ export default function Editor({ historySize } : EditorProps) {
 				editorScoresReducer(newEditorScore);
 				break;
 			case("notes"):
+				noteChangeStartTime.current = Date.now();
 				changeNoteDuration(buttonName as number);
 				break;
 			case("rests"):
+				noteChangeStartTime.current = Date.now();
 				changeNoteDuration(buttonName as number, 'r');
 				break;
 		}
