@@ -24,7 +24,7 @@ const restGlyphs = Object.values(glyphs.restGlyphs);
 const fourRests : Note[] = [{ keys: ['b/4'], duration: 4, type: 'r' },{ keys: ['b/4'], duration: 4, type: 'r' },
 	{ keys: ['b/4'], duration: 4, type: 'r' },{ keys: ['b/4'], duration: 4, type: 'r' }];
 
-const MAX_MEASURES = 100; // maximum number of measures allowed in a score
+const MAX_MEASURES = 60; // maximum number of measures allowed in a score
 
 // calculates the offset within the effective measure (the measure excluding padding for first and last notes) 
 // for each note in the score. returns a 2D array where 
