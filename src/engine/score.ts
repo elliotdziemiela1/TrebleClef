@@ -37,6 +37,36 @@ export var emptyScore : Score = {
     clef: 'treble'
 };
 
+export var emptyScoreQuotes : Score = {
+    "measures": [
+        { "notes": [
+                { "keys": ["b/4"], "duration": 4, "type": "r" },
+                { "keys": ["b/4"], "duration": 4, "type": "r" },
+                { "keys": ["b/4"], "duration": 4, "type": "r" },
+                { "keys": ["b/4"], "duration": 4, "type": "r" }
+        ] },
+        { "notes": [
+                { "keys": ["b/4"], "duration": 4, "type": "r" },
+                { "keys": ["b/4"], "duration": 4, "type": "r" },
+                { "keys": ["b/4"], "duration": 4, "type": "r" },
+                { "keys": ["b/4"], "duration": 4, "type": "r" }
+        ] },
+        { "notes": [
+                { "keys": ["b/4"], "duration": 4, "type": "r" },
+                { "keys": ["b/4"], "duration": 4, "type": "r" },
+                { "keys": ["b/4"], "duration": 4, "type": "r" },
+                { "keys": ["b/4"], "duration": 4, "type": "r" }
+        ] },
+        { "notes": [
+                { "keys": ["b/4"], "duration": 4, "type": "r" },
+                { "keys": ["b/4"], "duration": 4, "type": "r" },
+                { "keys": ["b/4"], "duration": 4, "type": "r" },
+                { "keys": ["b/4"], "duration": 4, "type": "r" },
+        ] },
+    ],
+    "clef": "treble"
+};
+
 export var demoScore : Score = {
     measures: [
         {
