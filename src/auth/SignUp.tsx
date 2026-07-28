@@ -2,11 +2,11 @@ import { useState, type FormEvent } from "react";
 import { useAuthContext } from "./AuthContext";
 
 export default function SignUp({ onSwitchToSignIn, needsEmailConfirmation }: { onSwitchToSignIn: () => void, needsEmailConfirmation : (email: string, needsConfirmation: boolean) => void }) {
-  const { signUp, confirmSignUp, signIn } = useAuthContext();
+  const { signUp} = useAuthContext();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [code, setCode] = useState("");
-  const [awaitingConfirmation, setAwaitingConfirmation] = useState(false);
+  // const [code, setCode] = useState("");
+  // const [awaitingConfirmation, setAwaitingConfirmation] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -16,8 +16,10 @@ export default function SignUp({ onSwitchToSignIn, needsEmailConfirmation }: { o
     setSubmitting(true);
     try {
       const { needsConfirmation } = await signUp(email, password);
-      setAwaitingConfirmation(needsConfirmation);
-      needsEmailConfirmation(email, true);
+      if (needsConfirmation){
+        // setAwaitingConfirmation(needsConfirmation);
+        needsEmailConfirmation(email, true);
+      }
       onSwitchToSignIn();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Sign up failed.");

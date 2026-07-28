@@ -16,8 +16,8 @@ export default function SignIn({ onSwitchToSignUp, needsEmailConfirmation }: { o
     try {
       const {needsConfirmation} = await signIn(email, password); // error not being caught for some reason
       if (needsConfirmation) {
+        needsEmailConfirmation(email, true);
       } 
-      needsEmailConfirmation(email, true);
     } catch (err) {
       setError((err as Error).message);
     } finally {

@@ -32,7 +32,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   async function refreshUser() {
     try {
-      await getCurrentUser();
+      const {username, userId} = await getCurrentUser();
+      console.log("Logged in username: " + username + ". Logged in userID: " + userId);
       const attributes = await fetchUserAttributes();
       setEmail(attributes.email ?? null);
       setStatus("authenticated");
