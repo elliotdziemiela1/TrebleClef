@@ -7,6 +7,7 @@ import {
   getCurrentUser,
   fetchUserAttributes,
   fetchAuthSession,
+  resendSignUpCode,
 } from "aws-amplify/auth";
 import { Hub } from "aws-amplify/utils";
 
@@ -15,8 +16,9 @@ type AuthStatus = "loading" | "authenticated" | "unauthenticated";
 interface AuthContextValue {
   status: AuthStatus;
   email: string | null;
-  signIn: (email: string, password: string) => Promise<void>;
+  signIn: (email: string, password: string) => Promise<{ needsConfirmation: boolean }>;
   signUp: (email: string, password: string) => Promise<{ needsConfirmation: boolean }>;
+  resendConfirmation: (username: string) => Promise<void>;
   confirmSignUp: (email: string, code: string) => Promise<void>;
   signOut: () => Promise<void>;
   getAccessToken: () => Promise<string | undefined>;
@@ -58,7 +60,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     status,
     email,
     async signIn(email, password) {
-      await amplifySignIn({ username: email, password });
+      const { nextStep } = await amplifySignIn({ username: email, password });
+      return { needsConfirmation : nextStep.signInStep === "CONFIRM_SIGN_UP"}
     },
     async signUp(email, password) {
       const { nextStep } = await amplifySignUp({
@@ -67,6 +70,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         options: { userAttributes: { email } },
       });
       return { needsConfirmation: nextStep.signUpStep === "CONFIRM_SIGN_UP" };
+    },
+    async resendConfirmation(email) {
+      await resendSignUpCode({ username: email})
     },
     async confirmSignUp(email, code) {
       await amplifyConfirmSignUp({ username: email, confirmationCode: code });

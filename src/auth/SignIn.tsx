@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { useAuthContext } from "./AuthContext";
 
-export default function SignIn({ onSwitchToSignUp }: { onSwitchToSignUp: () => void }) {
+export default function SignIn({ onSwitchToSignUp, needsEmailConfirmation }: { onSwitchToSignUp: () => void, needsEmailConfirmation : (email: string, needsConfirmation: boolean) => void }) {
   const { signIn } = useAuthContext();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -9,33 +9,18 @@ export default function SignIn({ onSwitchToSignUp }: { onSwitchToSignUp: () => v
   const [submitting, setSubmitting] = useState(false);
 
 
-
-
-
-
-  // MUST SHOW MESSAGE WHEN USER TRIES TO SIGN UP BUT NEEDS TO CONFIRM EMAIL FIRST.
-
-
-
-
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
     setSubmitting(true);
     try {
-      console.log("Signing in with email:", email);
-      const result : any = await signIn(email, password); // error not being caught for some reason
-      if (result.isSignedIn) {
-        console.log("Setting submitting to false");
-        setSubmitting(false);
-      } else {
-        setError("Sign in failed.")
-      }
+      const {needsConfirmation} = await signIn(email, password); // error not being caught for some reason
+      if (needsConfirmation) {
+      } 
+      needsEmailConfirmation(email, true);
     } catch (err) {
-      console.log("Msg:" + (err as Error).message);
-      setError(err instanceof Error ? err.message : "Sign in failed.");
+      setError((err as Error).message);
     } finally {
-      console.log("Setting submitting to false");
       setSubmitting(false);
     }
   }
