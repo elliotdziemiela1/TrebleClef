@@ -4,7 +4,6 @@ import {
   signUp as amplifySignUp,
   confirmSignUp as amplifyConfirmSignUp,
   signOut as amplifySignOut,
-  getCurrentUser,
   fetchUserAttributes,
   fetchAuthSession,
   resendSignUpCode,
@@ -16,6 +15,7 @@ type AuthStatus = "loading" | "authenticated" | "unauthenticated";
 interface AuthContextValue {
   status: AuthStatus;
   email: string | null;
+  accessToken: string | null;
   signIn: (email: string, password: string) => Promise<{ needsConfirmation: boolean }>;
   signUp: (email: string, password: string) => Promise<{ needsConfirmation: boolean }>;
   resendConfirmation: (username: string) => Promise<void>;
@@ -29,14 +29,15 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [status, setStatus] = useState<AuthStatus>("loading");
   const [email, setEmail] = useState<string | null>(null);
+  const [accessToken, setAccessToken] = useState<string | null>(null)
 
   async function refreshUser() {
     try {
-      const {username, userId} = await getCurrentUser();
-      console.log("Logged in username: " + username + ". Logged in userID: " + userId);
       const attributes = await fetchUserAttributes();
       setEmail(attributes.email ?? null);
       setStatus("authenticated");
+      const authSession = await fetchAuthSession();
+      setAccessToken(authSession.tokens?.accessToken?.toString() ?? null);
     } catch {
       setEmail(null);
       setStatus("unauthenticated");
@@ -60,6 +61,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const value: AuthContextValue = {
     status,
     email,
+    accessToken,
     async signIn(email, password) {
       const { nextStep } = await amplifySignIn({ username: email, password });
       return { needsConfirmation : nextStep.signInStep === "CONFIRM_SIGN_UP"}
