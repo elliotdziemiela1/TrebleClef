@@ -1,7 +1,9 @@
+import { useAuthContext } from "../auth/AuthContext"
+
 // const serverUrl = import.meta.env.SERVER_URL
 const serverUrl = "https://treble-clef-server.vercel.app/"
 
-export async function reserveUsername(username: string, sessionToken: string) : Promise<boolean> {
+export async function reserveUsernameBase(username: string, sessionToken: string) : Promise<boolean> {
     if (!username.length)
         throw new Error("Username cannot be empty.")
     const response = await fetch(serverUrl + "username/" + username, {
@@ -21,7 +23,7 @@ export async function reserveUsername(username: string, sessionToken: string) : 
     return true
 }
 
-export async function deleteUsername(username: string, sessionToken: string) : Promise<boolean> {
+export async function deleteUsernameBase(username: string, sessionToken: string) : Promise<boolean> {
     if (!username.length)
         throw new Error("Username cannot be empty.")
     const response = await fetch(serverUrl + "username/" + username, {
@@ -36,4 +38,12 @@ export async function deleteUsername(username: string, sessionToken: string) : P
     }
 
     return true
+}
+
+export function useServerCalls(){
+    const authCtx = useAuthContext();
+    return {
+        reserveUsername: (username: string) => reserveUsernameBase(username, authCtx.accessToken ?? ""),
+        deleteUsername: (username: string) => deleteUsernameBase(username, authCtx.accessToken ?? "")
+    }
 }
