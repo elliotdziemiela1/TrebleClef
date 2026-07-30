@@ -1,9 +1,7 @@
 import { useAuthContext } from "../auth/AuthContext"
 import type { UserProfile } from "../types/types"
 
-// const serverUrl = import.meta.env.SERVER_URL
-// const serverUrl = "https://treble-clef-server.vercel.app/"
-const serverUrl = "http://localhost:3000/"
+const serverUrl = import.meta.env.DEV ? "http://localhost:3000/" : import.meta.env.SERVER_URL
 
 
 export async function reserveUsernameBase(username: string, sessionToken: string) : Promise<boolean> {
