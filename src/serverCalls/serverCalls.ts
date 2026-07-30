@@ -77,7 +77,7 @@ export async function updateProfileBase(newProfile : UserProfile, sessionToken: 
     if (!response.ok){
         const body = await response.json()
         if (response.status === 400)
-            throw new Error(body.data[0] + (body.data[1] ?? ""))
+            throw new Error(body.data)
         else 
             throw new Error("Error with profile update.")
     }
