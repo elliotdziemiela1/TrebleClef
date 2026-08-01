@@ -5,6 +5,7 @@ import Home from "./home.tsx";
 import EditorPage from "./EditorPage.tsx";
 import { useAuthContext } from "./auth/AuthContext";
 import AuthPage from "./auth/AuthPage";
+import TestPage from "./testPage.tsx";
 
 function App() {
   const { status, email, signOut } = useAuthContext();
@@ -24,6 +25,7 @@ function App() {
           <Nav>
             <Nav.Link as={Link} to="/">Home</Nav.Link>
             <Nav.Link as={Link} to="/editor">Editor</Nav.Link>
+            <Nav.Link as={Link} to="/test">Test Page</Nav.Link>
           </Nav>
           <p>{email}</p>
           <button onClick={() => signOut()}>Sign out</button>
@@ -31,6 +33,7 @@ function App() {
         <Routes>
           <Route path="/" element={<Home/>}/>
           <Route path="/editor" element={<EditorPage/>}/>
+          <Route path="/test" element={<TestPage/>}/>
         </Routes>
       </div>
     </BrowserRouter>

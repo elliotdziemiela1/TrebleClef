@@ -1,5 +1,6 @@
 import { useAuthContext } from "../auth/AuthContext"
-import type { UserProfile } from "../types/types"
+import type { Score } from "../engine/score"
+import type { DatabaseScore, ScoreMetadata, UserProfile } from "../types/types"
 
 const serverUrl = import.meta.env.DEV ? "http://localhost:3000/" : (import.meta.env.VITE_SERVER_URL || "")
 
@@ -83,9 +84,53 @@ export async function updateProfileBase(newProfile : UserProfile, sessionToken: 
     return true
 }
 
+export async function createScoreBase(dbScore: DatabaseScore, sessionToken: string) : Promise<boolean> {
+    const response = await fetch(serverUrl + "scores", {
+        method: "POST",
+        headers: {
+            "Authorization": "Bearer " + sessionToken,
+            "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify(dbScore)
+    })
+    if (!response.ok){
+        const body = await response.json()
+        if (response.status === 400)
+            throw new Error(body.error)
+        else 
+            throw new Error("Error with score creation.")
+    }
+
+    return true
+}
+
+export async function updateScoreBase(dbScore: DatabaseScore, sessionToken: string) : Promise<boolean> {
+    const response = await fetch(serverUrl + "scores", {
+        method: "PUT",
+        headers: {
+            "Authorization": "Bearer " + sessionToken,
+            "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify(dbScore)
+    })
+    if (!response.ok){
+        const body = await response.json()
+        if (response.status === 400)
+            throw new Error(body.error)
+        else 
+            throw new Error("Error with score update.")
+    }
+
+    return true
+}
+
 export function useServerCalls(){
     const authCtx = useAuthContext();
     return {
+        updateScore: (dbScore: DatabaseScore) => updateScoreBase(dbScore, authCtx.accessToken ?? ""),
+        createScore: (dbScore: DatabaseScore) => createScoreBase(dbScore, authCtx.accessToken ?? ""),
         updateProfile: (newProfile: UserProfile) => updateProfileBase(newProfile, authCtx.accessToken ?? ""),
         createProfile:(newProfile : UserProfile) => createProfileBase(newProfile, authCtx.accessToken ?? ""),
         reserveUsername: (username: string) => reserveUsernameBase(username, authCtx.accessToken ?? ""),
