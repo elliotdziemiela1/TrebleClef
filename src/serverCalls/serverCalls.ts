@@ -1,6 +1,5 @@
 import { useAuthContext } from "../auth/AuthContext"
-import type { Score } from "../engine/score"
-import type { DatabaseScore, ScoreMetadata, UserProfile } from "../types/types"
+import type { DatabaseScore, UserProfile } from "../types/types"
 
 const serverUrl = import.meta.env.DEV ? "http://localhost:3000/" : (import.meta.env.VITE_SERVER_URL || "")
 
