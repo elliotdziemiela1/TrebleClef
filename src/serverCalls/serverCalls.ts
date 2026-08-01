@@ -125,9 +125,30 @@ export async function updateScoreBase(dbScore: DatabaseScore, sessionToken: stri
     return true
 }
 
+export async function deleteScoreBase(scoreID: string, sessionToken: string) : Promise<boolean> {
+    const response = await fetch(serverUrl + "scores/" + scoreID, {
+        method: "DELETE",
+        headers: {
+            "Authorization": "Bearer " + sessionToken,
+            "Content-Type": "application/json",
+        },
+        credentials: "include"
+    })
+    if (!response.ok){
+        const body = await response.json()
+        if (response.status === 400)
+            throw new Error(body.error)
+        else 
+            throw new Error("Error with score deletion.")
+    }
+
+    return true
+}
+
 export function useServerCalls(){
     const authCtx = useAuthContext();
     return {
+        deleteScore: (scoreID: string) => deleteScoreBase(scoreID, authCtx.accessToken ?? ""),
         updateScore: (dbScore: DatabaseScore) => updateScoreBase(dbScore, authCtx.accessToken ?? ""),
         createScore: (dbScore: DatabaseScore) => createScoreBase(dbScore, authCtx.accessToken ?? ""),
         updateProfile: (newProfile: UserProfile) => updateProfileBase(newProfile, authCtx.accessToken ?? ""),

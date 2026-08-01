@@ -136,6 +136,7 @@ const dummyScoreMetadatas = [
 export default function TestPage(){
     const [error, setError] = useState("")
     const [message, setMessage] = useState("")
+    const [inputScoreID, setInputScoreID] = useState("")
     const serverCalls = useServerCalls();
     return (
         <>
@@ -287,6 +288,20 @@ export default function TestPage(){
                         setMessage("")
                     }
                     }}>Test updateScore with id 1 and new data but same author</button>
+            </div>
+            <div style={{"display": "block"}}>
+                {/* delete a score */}
+                <input value={inputScoreID} onChange={(e) => setInputScoreID(e.target.value)} />
+                <button onClick={async () => {
+                    try { 
+                        await serverCalls.deleteScore(inputScoreID)
+                        setMessage("Score successfully deleted")
+                        setError("");
+                    } catch (err : any) {
+                        setError(err.message);
+                        setMessage("")
+                    }
+                    }}>Test deletescore with id from input</button>
             </div>
             {!!error.length && <p style={{color: "red"}}>{`Error: ${error}`}</p>}
             {!!message.length && <p style={{color: "grey"}}>{message}</p>}
