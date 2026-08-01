@@ -105,7 +105,7 @@ export async function updateProfileBase(newProfile : UserProfile, sessionToken: 
 }
 
 export async function getScoreBase(scoreID: string, sessionToken: string) : Promise<DatabaseScore> {
-    const response = await fetch(serverUrl + "scores/" + scoreID, {
+    const response = await fetch(serverUrl + "scores/getScore/" + scoreID, {
         method: "GET",
         headers: {
             "Authorization": "Bearer " + sessionToken,
@@ -122,6 +122,26 @@ export async function getScoreBase(scoreID: string, sessionToken: string) : Prom
 
     const body = await response.json()
     return { scoreID: scoreID, ...body.data } as DatabaseScore
+}
+
+export async function getAllMyScoreMetadatasBase(sessionToken: string) : Promise<DatabaseScore[]> {
+    const response = await fetch(serverUrl + "scores/allMyScoreMetadatas", {
+        method: "GET",
+        headers: {
+            "Authorization": "Bearer " + sessionToken,
+            "Content-Type": "application/json",
+        },
+        credentials: "include"
+    })
+    if (!response.ok){
+        if (response.status === 404)
+            throw new Error("No scores found.")
+        else 
+            throw new Error("Error fetching scores.")
+    }
+
+    const body = await response.json()
+    return body.data as DatabaseScore[]
 }
 
 export async function createScoreBase(dbScore: DatabaseScore, sessionToken: string) : Promise<boolean> {
@@ -190,10 +210,10 @@ export function useServerCalls(){
     const authCtx = useAuthContext();
     return {
         getScore: (scoreID: string) => getScoreBase(scoreID, authCtx.accessToken ?? ""),
+        getAllMyScoreMetadatas: () => getAllMyScoreMetadatasBase(authCtx.accessToken ?? ""),
         deleteScore: (scoreID: string) => deleteScoreBase(scoreID, authCtx.accessToken ?? ""),
         updateScore: (dbScore: DatabaseScore) => updateScoreBase(dbScore, authCtx.accessToken ?? ""),
         createScore: (dbScore: DatabaseScore) => createScoreBase(dbScore, authCtx.accessToken ?? ""),
-        // getProfile: (handle: string) => getProfileBase(handle, authCtx.accessToken ?? ""),
         getLoggedInProfile: () => getLoggedInProfileBase(authCtx.accessToken ?? ""),
         updateProfile: (newProfile: UserProfile) => updateProfileBase(newProfile, authCtx.accessToken ?? ""),
         createProfile:(newProfile : UserProfile) => createProfileBase(newProfile, authCtx.accessToken ?? ""),

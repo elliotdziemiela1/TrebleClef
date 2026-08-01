@@ -115,7 +115,7 @@ const dummyScoreMetadatas = [
         "Secondary_instruments": []
     }, 
     {
-        "Name": "Test 2.3",
+        "Name": "Test 2.3.9999",
         "Author_name": "user1",
         "Date_time_created": "2026-07-23T00:28:36Z",
         "Date_time_last_edited": "2026-07-23T00:28:36Z",
@@ -280,14 +280,14 @@ export default function TestPage(){
                     }}>Test updateScore with id 1 and same data</button>
                     <button onClick={async () => {
                     try { 
-                        await serverCalls.updateScore({scoreID: dummyScoreIDs[3], metadata: dummyScoreMetadatas[2], score: dummyScores[0]})
+                        await serverCalls.updateScore({scoreID: "8d82e54e-0703-4396-8cbb-cbd97dfb831f", metadata: dummyScoreMetadatas[2], score: dummyScores[0]})
                         setMessage("Score successfully updated")
                         setError("");
                     } catch (err : any) {
                         setError(err.message);
                         setMessage("")
                     }
-                    }}>Test updateScore with id 1 and new data but same author</button>
+                    }}>Test updateScore recent</button>
             </div>
             <div style={{"display": "block"}}>
                 {/* delete a score */}
@@ -314,6 +314,18 @@ export default function TestPage(){
                         setMessage("")
                     }
                 }}>Test getScore with id from input</button>
+            </div>
+            <div>
+                <button onClick={async () => {
+                    try { 
+                        await serverCalls.getAllMyScoreMetadatas()
+                        setMessage("Score metadatas successfully fetched")
+                        setError("");
+                    } catch (err : any) {
+                        setError(err.message);
+                        setMessage("")
+                    }
+                }}>Get all my score metadatas</button>
             </div>
             {!!error.length && <p style={{color: "red"}}>{`Error: ${error}`}</p>}
             {!!message.length && <p style={{color: "grey"}}>{message}</p>}
