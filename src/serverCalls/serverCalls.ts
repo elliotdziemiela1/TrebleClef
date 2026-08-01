@@ -41,6 +41,27 @@ export async function deleteUsernameBase(username: string, sessionToken: string)
     return true
 }
 
+export async function getLoggedInProfileBase(sessionToken: string) : Promise<UserProfile> {
+    const response = await fetch(serverUrl + "users/profile", {
+        method: "GET",
+        headers: {
+            "Authorization": "Bearer " + sessionToken,
+        },
+        credentials: "include"
+    })
+    if (!response.ok){
+        if (response.status === 404)
+            throw new Error("Profile not found.")
+        else 
+            throw new Error("Error fetching profile.")
+    }
+
+    const body = await response.json()
+    return body.data as UserProfile
+}
+
+
+
 export async function createProfileBase(newProfile : UserProfile, sessionToken: string) : Promise<boolean> {    
     const response = await fetch(serverUrl + "users/profile", {
         method: "POST",
@@ -81,6 +102,26 @@ export async function updateProfileBase(newProfile : UserProfile, sessionToken: 
     }
 
     return true
+}
+
+export async function getScoreBase(scoreID: string, sessionToken: string) : Promise<DatabaseScore> {
+    const response = await fetch(serverUrl + "scores/" + scoreID, {
+        method: "GET",
+        headers: {
+            "Authorization": "Bearer " + sessionToken,
+            "Content-Type": "application/json",
+        },
+        credentials: "include"
+    })
+    if (!response.ok){
+        if (response.status === 404)
+            throw new Error("Score not found.")
+        else 
+            throw new Error("Error fetching score.")
+    }
+
+    const body = await response.json()
+    return { scoreID: scoreID, ...body.data } as DatabaseScore
 }
 
 export async function createScoreBase(dbScore: DatabaseScore, sessionToken: string) : Promise<boolean> {
@@ -148,9 +189,12 @@ export async function deleteScoreBase(scoreID: string, sessionToken: string) : P
 export function useServerCalls(){
     const authCtx = useAuthContext();
     return {
+        getScore: (scoreID: string) => getScoreBase(scoreID, authCtx.accessToken ?? ""),
         deleteScore: (scoreID: string) => deleteScoreBase(scoreID, authCtx.accessToken ?? ""),
         updateScore: (dbScore: DatabaseScore) => updateScoreBase(dbScore, authCtx.accessToken ?? ""),
         createScore: (dbScore: DatabaseScore) => createScoreBase(dbScore, authCtx.accessToken ?? ""),
+        // getProfile: (handle: string) => getProfileBase(handle, authCtx.accessToken ?? ""),
+        getLoggedInProfile: () => getLoggedInProfileBase(authCtx.accessToken ?? ""),
         updateProfile: (newProfile: UserProfile) => updateProfileBase(newProfile, authCtx.accessToken ?? ""),
         createProfile:(newProfile : UserProfile) => createProfileBase(newProfile, authCtx.accessToken ?? ""),
         reserveUsername: (username: string) => reserveUsernameBase(username, authCtx.accessToken ?? ""),

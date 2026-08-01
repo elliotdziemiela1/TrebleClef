@@ -85,8 +85,8 @@ const dummyScores : Score[] = [
 
 const dummyScoreMetadatas = [
     {
-        "Name": "Test 1",
-        "Author_name": "user2",
+        "Name": "Test 2.1",
+        "Author_name": "user1",
         "Date_time_created": "2026-07-23T00:28:36Z",
         "Date_time_last_edited": "2026-07-23T00:28:36Z",
         "Primary_genre": "Rock",
@@ -100,8 +100,8 @@ const dummyScoreMetadatas = [
         "Secondary_instruments": []
     }, 
     {
-        "Name": "Test 2",
-        "Author_name": "weird User",
+        "Name": "Test 2.2",
+        "Author_name": "user1",
         "Date_time_created": "2026-07-23T00:28:36Z",
         "Date_time_last_edited": "2026-07-23T00:28:36Z",
         "Primary_genre": "Electronic",
@@ -115,8 +115,8 @@ const dummyScoreMetadatas = [
         "Secondary_instruments": []
     }, 
     {
-        "Name": "Test 3",
-        "Author_name": "user2",
+        "Name": "Test 2.3",
+        "Author_name": "user1",
         "Date_time_created": "2026-07-23T00:28:36Z",
         "Date_time_last_edited": "2026-07-23T00:28:36Z",
         "Primary_genre": "Random",
@@ -302,6 +302,18 @@ export default function TestPage(){
                         setMessage("")
                     }
                     }}>Test deletescore with id from input</button>
+            </div>
+            <div>
+                <button onClick={async () => {
+                    try { 
+                        const score = await serverCalls.getScore(inputScoreID)
+                        setMessage("Score successfully fetched: " + JSON.stringify(score))
+                        setError("");
+                    } catch (err : any) {
+                        setError(err.message);
+                        setMessage("")
+                    }
+                }}>Test getScore with id from input</button>
             </div>
             {!!error.length && <p style={{color: "red"}}>{`Error: ${error}`}</p>}
             {!!message.length && <p style={{color: "grey"}}>{message}</p>}
