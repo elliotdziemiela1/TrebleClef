@@ -1,5 +1,5 @@
 import { useAuthContext } from "../auth/AuthContext"
-import type { DatabaseScore, UserProfile } from "../types/types"
+import type { DatabaseScore, DatabaseUserProfile, UserProfile } from "../types/types"
 
 const serverUrl = import.meta.env.DEV ? "http://localhost:3000/" : (import.meta.env.VITE_SERVER_URL || "")
 
@@ -215,8 +215,8 @@ export function useServerCalls(){
         updateScore: (dbScore: DatabaseScore) => updateScoreBase(dbScore, authCtx.accessToken ?? ""),
         createScore: (dbScore: DatabaseScore) => createScoreBase(dbScore, authCtx.accessToken ?? ""),
         getLoggedInProfile: () => getLoggedInProfileBase(authCtx.accessToken ?? ""),
-        updateProfile: (newProfile: UserProfile) => updateProfileBase(newProfile, authCtx.accessToken ?? ""),
-        createProfile:(newProfile : UserProfile) => createProfileBase(newProfile, authCtx.accessToken ?? ""),
+        updateProfile: (newProfile: DatabaseUserProfile) => updateProfileBase(newProfile, authCtx.accessToken ?? ""),
+        createProfile:(newProfile : DatabaseUserProfile) => createProfileBase(newProfile, authCtx.accessToken ?? ""),
         reserveUsername: (username: string) => reserveUsernameBase(username, authCtx.accessToken ?? ""),
         deleteUsername: (username: string) => deleteUsernameBase(username, authCtx.accessToken ?? "")
     }

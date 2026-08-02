@@ -25,6 +25,7 @@ interface AuthContextValue {
   confirmSignUp: (email: string, code: string) => Promise<void>;
   signOut: () => Promise<void>;
   getAccessToken: () => Promise<string | undefined>;
+  refreshProfile: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -41,7 +42,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setEmail(attributes.email ?? null);
       setStatus("authenticated");
       const authSession = await fetchAuthSession();
-      setAccessToken(authSession.tokens?.accessToken?.toString() ?? null);
+      if (authSession.tokens?.accessToken){
+        setAccessToken(authSession.tokens?.accessToken?.toString());
+        try {
+          const prof = await getLoggedInProfileBase(authSession.tokens?.accessToken?.toString());
+          setProfile(prof);
+        } catch {
+          
+        }
+      }
     } catch {
       setEmail(null);
       setStatus("unauthenticated");
@@ -50,7 +59,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     async function fetchProfile() {
-      console.log("Fetching profile with access token:", accessToken);
       if (!!accessToken) {
         const prof = await getLoggedInProfileBase(accessToken);
         console.log("Fetched profile:", prof);
@@ -67,6 +75,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (payload.event === "signedIn") refreshUser();
       if (payload.event === "signedOut") {
         setEmail(null);
+        setProfile(null);
         setStatus("unauthenticated");
       }
     });
@@ -104,6 +113,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const session = await fetchAuthSession();
       return session.tokens?.accessToken?.toString();
     },
+    async refreshProfile(){
+      if (!!accessToken){
+        const prof = await getLoggedInProfileBase(accessToken?.toString());
+        setProfile(prof);
+      }
+    }
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

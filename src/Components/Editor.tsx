@@ -4,7 +4,7 @@ import { calcNoteWidth, renderScore, glyphs, measuresPerStave, BASELINE_PIXELS_P
 import { emptyScore, type Score, type Note, type Measure, type Duration } from '../engine/score';
 import { responsiveRendererVariables, pixelsPerStaveY, staveStartX,  
 	measureWidthPadding } from '../engine/renderer'; // Will use these soon
-import { HISTORY_SIZE } from '../EditorPage';
+import { HISTORY_SIZE } from '../EditorPage/EditorPage';
 
 type EditorScore = { 
 	score: Score, // the musical score

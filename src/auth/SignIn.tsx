@@ -1,12 +1,14 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { useAuthContext } from "./AuthContext";
+import { useServerCalls } from "../serverCalls/serverCalls";
 
 export default function SignIn({ onSwitchToSignUp, needsEmailConfirmation }: { onSwitchToSignUp: () => void, needsEmailConfirmation : (email: string, needsConfirmation: boolean) => void }) {
-  const { signIn } = useAuthContext();
+  const authCtx = useAuthContext();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const serverCalls = useServerCalls();
 
 
   async function handleSubmit(e: FormEvent) {
@@ -14,12 +16,11 @@ export default function SignIn({ onSwitchToSignUp, needsEmailConfirmation }: { o
     setError(null);
     setSubmitting(true);
     try {
-      const {needsConfirmation} = await signIn(email, password); // error not being caught for some reason
+      const {needsConfirmation} = await authCtx.signIn(email, password); // error not being caught for some reason
       if (needsConfirmation) {
         needsEmailConfirmation(email, true);
-      } else {
-        window.location.href = "/"; // Redirect to home page after successful sign-in
       }
+      window.location.href = "/"
     } catch (err) {
       setError((err as Error).message);
     } finally {

@@ -2,11 +2,12 @@ import { Nav, Navbar } from "react-bootstrap";
 import './App.module.scss'
 import { BrowserRouter, Routes, Route, Link } from "react-router-dom";
 import Home from "./home.tsx";
-import EditorPage from "./EditorPage.tsx";
+import EditorPage from "./EditorPage/EditorPage.tsx";
 import { useAuthContext } from "./auth/AuthContext";
 import AuthPage from "./auth/AuthPage";
 import TestPage from "./testPage.tsx";
 import styles from "./App.module.scss";
+import HandleCreationPage from "./HandleCreationPage/HandleCreationPage.tsx";
 
 function App() {
   const authCtx = useAuthContext();
@@ -18,7 +19,7 @@ function App() {
   // if (authCtx.status === "unauthenticated") {
   //   return <AuthPage />;
   // }
-
+  
   return (
     <BrowserRouter>
       <div className="App">
@@ -41,12 +42,16 @@ function App() {
             )}
           </div>
         </Navbar>
-        <Routes>
-          <Route path="/" element={<Home/>}/>
-          <Route path="/editor" element={<EditorPage/>}/>
-          <Route path="/test" element={<TestPage/>}/>
-          <Route path="/auth" element={<AuthPage/>}/>
-        </Routes>
+        {(authCtx.status === "authenticated" && !authCtx.profile?.Username.length) ? 
+          <HandleCreationPage/> 
+          :
+          <Routes>
+            <Route path="/" element={<Home/>}/>
+            <Route path="/editor" element={<EditorPage/>}/>
+            <Route path="/test" element={<TestPage/>}/>
+            <Route path="/auth" element={<AuthPage/>}/>
+          </Routes>
+        }
       </div>
     </BrowserRouter>
   )

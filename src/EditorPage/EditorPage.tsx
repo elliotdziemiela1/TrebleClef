@@ -1,4 +1,4 @@
-import Editor from './Components/Editor';
+import Editor from '../Components/Editor';
 import styles from './EditorPage.module.scss';
 
 export const HISTORY_SIZE = 8; // number of scores to keep in history for undo/redo
@@ -11,4 +11,4 @@ export default function EditorPage() {
             <Editor historySize={HISTORY_SIZE} />
         </div>
     )
-}
+}       

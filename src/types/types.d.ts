@@ -1,10 +1,13 @@
 import { Score } from "../engine/score"
 
 export interface UserProfile {
-    Email: string,
     Username: string,
     Number_of_scores: number,
     Bio: string
+}
+
+export interface DatabaseUserProfile extends UserProfile {
+    Email: string
 }
 
 export interface ScoreMetadata {
