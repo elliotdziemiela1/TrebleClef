@@ -39,17 +39,17 @@ export interface DatabaseScore {
 }
 
 export const DefaultScoreMetadata : ScoreMetadata = {
-    Name: "",
-    Author_name: "",
-    Date_time_created: "",
-    Date_time_last_edited: "",
-    Primary_genre: "",
+    Name: "Untitled Score",
+    Author_name: "test",
+    Date_time_created: "test",
+    Date_time_last_edited: "test",
+    Primary_genre: "test",
     Secondary_genres: [],
     Number_of_ratings: 0,
     Total_number_of_stars: 0,
     Popularity_score: 0,
-    Total_measures: 0,
-    BPM: 0,
-    Primary_instrument: "",
+    Total_measures: 1,
+    BPM: 100,
+    Primary_instrument: "test",
     Secondary_instruments: []
 }

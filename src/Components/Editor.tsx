@@ -6,7 +6,8 @@ import { responsiveRendererVariables, pixelsPerStaveY, staveStartX,
 	measureWidthPadding } from '../engine/renderer'; // Will use these soon
 import { HISTORY_SIZE } from '../EditorPage/EditorPage';
 import { useServerCalls } from '../serverCalls/serverCalls';
-import { DefaultScoreMetadata, type ScoreMetadata } from '../types/types';
+import { DefaultScoreMetadata, type DatabaseScore, type ScoreMetadata } from '../types/types';
+import { useAuthContext } from '../auth/AuthContext';
 
 type EditorScore = { 
 	score: Score, // the musical score
@@ -66,6 +67,9 @@ export default function Editor({ historySize, scoreID } : EditorProps) {
 	const serverCalls = useServerCalls();
 	const noteChangeStartTime = useRef(0);
 	const [ scoreLoaded, setScoreLoaded ] = useState(false);
+	const [ isNewScore, setIsNewScore ] = useState(true);
+	const [savedMessage, setSavedMessage] = useState<string | null>(null);
+	const authCtx = useAuthContext();
 
 	const initialEditorScoresHistory = useMemo(() => {
 		return Array.from({length: historySize}, () : EditorScore =>{
@@ -80,7 +84,7 @@ export default function Editor({ historySize, scoreID } : EditorProps) {
 	const scoreContainerRef = useRef<HTMLDivElement>(null);
 	const editorContainerRef = useRef<HTMLDivElement>(null);
 
-	const [ scoreMetadata, setScoreMetadata ] = useState<ScoreMetadata>(DefaultScoreMetadata);
+	const [ scoreMetadata, setScoreMetadata ] = useState<ScoreMetadata>({ ...DefaultScoreMetadata, Author_name: authCtx.profile?.Username ?? "Anonymous" });
 	
 	// index into history of scores. historySize-1 = latest score, 0 = oldest score.
 	const [ historyIndex, historyIndexDispatch ] = useReducer((state, action) => {
@@ -119,6 +123,7 @@ export default function Editor({ historySize, scoreID } : EditorProps) {
 				const score = await serverCalls.getScore(scoreID!);
 				setScoreMetadata(score.metadata);
 				editorScoresReducer({ editorScore: { score: score.score, measureNoteLocations: getMeasureNoteXLocations(score.score), selectedNoteIdx: undefined }, update: true });
+				setIsNewScore(false);
 			} catch (error) {
 				console.log("Score with this ID not found. Created new empty score.")	
 			} finally {
@@ -243,7 +248,7 @@ export default function Editor({ historySize, scoreID } : EditorProps) {
 		if (process.env.NODE_ENV === "development"){
 			console.log("time from note change button press to score rendering was: " + (Date.now() - noteChangeStartTime.current).toString() + "ms")
 		}
-	}, [editorScores, historyIndex]);
+	}, [editorScores, historyIndex, scoreLoaded]);
 
 	function changeNoteDuration(duration : number, noteType?: string){
 		if (editorScores[historyIndex].selectedNoteIdx) {
@@ -338,6 +343,55 @@ export default function Editor({ historySize, scoreID } : EditorProps) {
 		}
 	}
 
+	async function handleSave() {
+		if (!authCtx.profile?.Username){
+			setSavedMessage("You must be logged in to save a score.");
+			return;
+		}
+		console.log("metadata: " + JSON.stringify(scoreMetadata))
+		if (isNewScore) {
+			try {
+				const newMetadata = { ...scoreMetadata, Date_time_created: new Date().toISOString().slice(0, 19) + 'Z', Date_time_last_edited: new Date().toISOString().slice(0, 19) + 'Z' };
+				await serverCalls.createScore({ scoreID: scoreID, score: editorScores[historyIndex].score, metadata: newMetadata } as DatabaseScore);
+				setSavedMessage("Score saved successfully!");
+				setScoreMetadata(newMetadata);
+				setIsNewScore(false);
+			} catch (error) {
+				console.error("Error saving score:", error);
+				setSavedMessage("Error saving score.");
+			}
+		} else {
+			try {
+				const newMetadata = { ...scoreMetadata, Date_time_last_edited: new Date().toISOString().slice(0, 19) + 'Z' };
+				await serverCalls.updateScore({ scoreID: scoreID, score: editorScores[historyIndex].score, metadata: newMetadata } as DatabaseScore);
+				setSavedMessage("Score saved successfully!");
+				setScoreMetadata(newMetadata);
+				setIsNewScore(false);
+			} catch (error) {
+				console.error("Error saving score:", error);
+				setSavedMessage("Error saving score.");
+			}
+		}
+	}
+
+	async function handleSaveAsNewFile(metaData : ScoreMetadata) {
+		if (!authCtx.profile?.Username){
+			setSavedMessage("You must be logged in to save a score.");
+			return;
+		}
+		try {
+			const newID = window.crypto.randomUUID();
+			const newMetadata = { ...metaData, Date_time_created: new Date().toISOString().slice(0, 19) + 'Z', Date_time_last_edited: new Date().toISOString().slice(0, 19) + 'Z' };
+			await serverCalls.createScore({ scoreID: newID, score: editorScores[historyIndex].score, metadata: newMetadata } as DatabaseScore);
+			setScoreMetadata(newMetadata);
+			setSavedMessage("Score saved successfully!");
+			window.location.href = `/editor/${newID}`;
+		} catch (error) {
+			console.error("Error saving score:", error);
+			setSavedMessage("Error saving score.");
+		}
+	}
+
 	function controlButtonHandler(buttonName : string | number, catagory : string) {
 		let currentKey : string;
 		switch(catagory){
@@ -345,6 +399,8 @@ export default function Editor({ historySize, scoreID } : EditorProps) {
 				switch(buttonName){
 					case("Undo"): historyIndexDispatch(historyIndex - 1); break;
 					case("Redo"): historyIndexDispatch(historyIndex + 1); break;
+					case("Save"): handleSave(); break;
+					case("SaveAs"): handleSaveAsNewFile(scoreMetadata); break;
 				}
 				break;
 			case("pitch"):
@@ -387,7 +443,8 @@ export default function Editor({ historySize, scoreID } : EditorProps) {
 		<div>
 			{!scoreLoaded ? <p>Loading score...</p> :
 				<div ref={editorContainerRef} className={styles.container} onKeyDown={handleKeyDown} tabIndex={0}>
-						<h2>{scoreMetadata?.Name ? scoreMetadata.Name : "Untitled Score"}</h2>
+						<h2>{scoreMetadata?.Name ? scoreMetadata.Name : " "}</h2>
+						{savedMessage && <p className={styles.savedMessage}>{savedMessage}</p>}
 						<div className={styles['controls-div']} >
 							<EditorControls buttonPressCallback={controlButtonHandler} editorScore={editorScores[historyIndex]} historyIndex={historyIndex}/>
 						</div>
@@ -414,7 +471,7 @@ function EditorControls({ buttonPressCallback, editorScore, historyIndex } : Edi
 				<button onClick={() => buttonPressCallback("Undo", "control")} disabled={historyIndex == 0}>Undo</button>
 				<button onClick={() => buttonPressCallback("Redo", "control")} disabled={historyIndex == HISTORY_SIZE - 1}>Redo</button>
 				<button onClick={() => buttonPressCallback("Save", "control")}>Save</button>
-				<button onClick={() => buttonPressCallback("Load", "control")}>Load</button>
+				<button onClick={() => buttonPressCallback("SaveAs", "control")}>Save as new score</button>
 			</div>
 			<div className={styles['score-buttons']}>
 				<div className={styles['pitch-container']}>
