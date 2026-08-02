@@ -1,5 +1,5 @@
 import { useAuthContext } from "../auth/AuthContext"
-import type { DatabaseScore, DatabaseUserProfile, UserProfile } from "../types/types"
+import type { DatabaseScore, DatabaseUserProfile, ScoreMetadataWithID, UserProfile } from "../types/types"
 
 const serverUrl = import.meta.env.DEV ? "http://localhost:3000/" : (import.meta.env.VITE_SERVER_URL || "")
 
@@ -124,7 +124,7 @@ export async function getScoreBase(scoreID: string, sessionToken: string) : Prom
     return { scoreID: scoreID, ...body.data } as DatabaseScore
 }
 
-export async function getAllMyScoreMetadatasBase(sessionToken: string) : Promise<DatabaseScore[]> {
+export async function getAllMyScoreMetadatasBase(sessionToken: string) : Promise<ScoreMetadataWithID[]> {
     const response = await fetch(serverUrl + "scores/allMyScoreMetadatas", {
         method: "GET",
         headers: {
@@ -141,7 +141,7 @@ export async function getAllMyScoreMetadatasBase(sessionToken: string) : Promise
     }
 
     const body = await response.json()
-    return body.data as DatabaseScore[]
+    return body.data as ScoreMetadataWithID[]
 }
 
 export async function createScoreBase(dbScore: DatabaseScore, sessionToken: string) : Promise<boolean> {

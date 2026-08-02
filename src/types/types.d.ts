@@ -26,6 +26,10 @@ export interface ScoreMetadata {
     Secondary_instruments?: string[]
 }
 
+export interface ScoreMetadataWithID extends ScoreMetadata {
+    scoreID: string
+}
+
 export interface DatabaseScore {
     scoreID: string,
     metadata: ScoreMetadata,
