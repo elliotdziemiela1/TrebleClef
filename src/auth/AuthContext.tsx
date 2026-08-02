@@ -9,12 +9,15 @@ import {
   resendSignUpCode,
 } from "aws-amplify/auth";
 import { Hub } from "aws-amplify/utils";
+import type { UserProfile } from "../types/types";
+import { getLoggedInProfileBase } from "../serverCalls/serverCalls";
 
 type AuthStatus = "loading" | "authenticated" | "unauthenticated";
 
 interface AuthContextValue {
   status: AuthStatus;
   email: string | null;
+  profile: UserProfile | null;
   accessToken: string | null;
   signIn: (email: string, password: string) => Promise<{ needsConfirmation: boolean }>;
   signUp: (email: string, password: string) => Promise<{ needsConfirmation: boolean }>;
@@ -29,6 +32,7 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [status, setStatus] = useState<AuthStatus>("loading");
   const [email, setEmail] = useState<string | null>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [accessToken, setAccessToken] = useState<string | null>(null)
 
   async function refreshUser() {
@@ -43,6 +47,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setStatus("unauthenticated");
     }
   }
+
+  useEffect(() => {
+    async function fetchProfile() {
+      console.log("Fetching profile with access token:", accessToken);
+      if (!!accessToken) {
+        const prof = await getLoggedInProfileBase(accessToken);
+        console.log("Fetched profile:", prof);
+        setProfile(prof);
+      }
+    }
+    fetchProfile();
+  }, [accessToken]);
 
   useEffect(() => {
     refreshUser();
@@ -61,6 +77,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const value: AuthContextValue = {
     status,
     email,
+    profile,
     accessToken,
     async signIn(email, password) {
       const { nextStep } = await amplifySignIn({ username: email, password });

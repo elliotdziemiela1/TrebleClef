@@ -17,7 +17,9 @@ export default function SignIn({ onSwitchToSignUp, needsEmailConfirmation }: { o
       const {needsConfirmation} = await signIn(email, password); // error not being caught for some reason
       if (needsConfirmation) {
         needsEmailConfirmation(email, true);
-      } 
+      } else {
+        window.location.href = "/"; // Redirect to home page after successful sign-in
+      }
     } catch (err) {
       setError((err as Error).message);
     } finally {

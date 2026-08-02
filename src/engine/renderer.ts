@@ -84,7 +84,6 @@ export function renderScore(container: HTMLDivElement, score: Score) {
 	container.innerHTML = ''; // VexFlow can't update in place — clear and redraw
 	const renderer = new Renderer(container, Renderer.Backends.SVG);
 
-    debugger
 	renderer.resize(responsiveRendererVariables.rendererWidth + 1, pixelsPerStaveY);
 	const ctx = renderer.getContext();
 

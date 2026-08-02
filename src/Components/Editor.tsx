@@ -117,7 +117,6 @@ export default function Editor({ historySize } : EditorProps) {
 		if (!scoreContainerRef.current)
 			return false;
 		const boundingRect = scoreContainerRef.current.getBoundingClientRect();	
-		debugger
 		// 7px is a fudge factor to account for the clef and stave padding.
 		const clefFudgeFactor = 7 * (responsiveRendererVariables.pixelsPerMeasureX / BASELINE_PIXELS_PER_MEASURE);
 		const scoreLeft = boundingRect.left + staveStartX + clefFudgeFactor;
@@ -255,7 +254,6 @@ export default function Editor({ historySize } : EditorProps) {
 				// until it fits or hits 32nd notes, at which point it will be deleted if it still doesn't fit.
 				for (let j = newMeasure.notes.length - 1; j > i; j--){
 					console.log("j: " + j)
-					debugger
 					runningDuration += 1/newMeasure.notes[j].duration;
 					if (runningDuration > 1){ // if this note doesn't fit in the measure anymore
 						if (newMeasure.notes[j].duration == 32){ // if this note is already a 32nd note, delete it 
