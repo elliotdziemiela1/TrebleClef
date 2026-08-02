@@ -9,6 +9,7 @@ import TestPage from "./testPage.tsx";
 import styles from "./App.module.scss";
 import HandleCreationPage from "./HandleCreationPage/HandleCreationPage.tsx";
 import { useState } from "react";
+import ScoreLibraryPage from "./ScoreLibraryPage/ScoreLibraryPage.tsx";
 
 function App() {
   const authCtx = useAuthContext();
@@ -19,6 +20,7 @@ function App() {
         <Navbar expand="sm" bg="light" >
           <Nav>
             <Nav.Link as={Link} to="/">Home</Nav.Link>
+            <Nav.Link as={Link} to="/myScores">My Scores</Nav.Link>
             <Nav.Link as={Link} to={"/editor/" + newScoreID} onClick={() => {setNewScoreID(window.crypto.randomUUID())}}>Editor</Nav.Link>
           </Nav>
           <div className={styles.profileWidget}>
@@ -43,6 +45,7 @@ function App() {
             <Route path="/editor/:scoreID" element={<EditorPage/>}/>
             <Route path="/test" element={<TestPage/>}/>
             <Route path="/auth" element={<AuthPage/>}/>
+            <Route path="/myScores" element={<ScoreLibraryPage/>}/>
           </Routes>
         }
       </div>

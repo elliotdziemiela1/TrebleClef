@@ -3,7 +3,7 @@ import type { ScoreMetadataWithID } from "../types/types";
 import { useServerCalls } from "../serverCalls/serverCalls";
 import styles from "./ScoreSelector.module.scss"
 
-export default function ScoreSelector(scoreClicked : (scoreID: string) => void){
+export default function ScoreSelector({scoreClicked} : {scoreClicked : (scoreID: string) => void}){
     const serverCalls = useServerCalls();
     const [ scoreMetadatas, setScoreMetadatas ] = useState<ScoreMetadataWithID[]>([]);
 

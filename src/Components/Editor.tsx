@@ -65,7 +65,7 @@ const demoMeasureNoteLocations = getMeasureNoteXLocations(emptyScore);
 export default function Editor({ historySize, scoreID } : EditorProps) {
 	const serverCalls = useServerCalls();
 	const noteChangeStartTime = useRef(0);
-
+	const [ scoreLoaded, setScoreLoaded ] = useState(false);
 
 	const initialEditorScoresHistory = useMemo(() => {
 		return Array.from({length: historySize}, () : EditorScore =>{
@@ -112,6 +112,7 @@ export default function Editor({ historySize, scoreID } : EditorProps) {
 
 	// load score from server based on scoreID in URL parameter. If no scoreID is provided, load a new empty score.
 	useEffect(() => {
+		let setLoadEvent : any;
 		const loadScore = async () => {
 			// Load score from server
 			try {
@@ -120,9 +121,12 @@ export default function Editor({ historySize, scoreID } : EditorProps) {
 				editorScoresReducer({ editorScore: { score: score.score, measureNoteLocations: getMeasureNoteXLocations(score.score), selectedNoteIdx: undefined }, update: true });
 			} catch (error) {
 				console.log("Score with this ID not found. Created new empty score.")	
+			} finally {
+				setLoadEvent = window.setTimeout(() => setScoreLoaded(true), 400);
 			}
 		}
 		loadScore();
+		return () => clearTimeout(setLoadEvent);
 	}, []);
 
 	// deselect old node and select new node in current score
@@ -212,9 +216,9 @@ export default function Editor({ historySize, scoreID } : EditorProps) {
 			responsiveRendererVariables.effectiveMeasureWidth = responsiveRendererVariables.pixelsPerMeasureX - measureWidthPadding;
 
 			const currentEditorScore = editorScoresRef.current[historyIndexRef.current];
-			if (scoreContainerRef.current) {
-				renderScore(scoreContainerRef.current, currentEditorScore.score);
-			}
+			// if (scoreContainerRef.current) {
+			// 	renderScore(scoreContainerRef.current, currentEditorScore.score);
+			// }
 			editorScoresReducer({ editorScore: structuredClone(currentEditorScore), update: true });
 		}
 
@@ -233,7 +237,7 @@ export default function Editor({ historySize, scoreID } : EditorProps) {
 
 	// rerender score when it changes, or history index changes
 	useLayoutEffect(() => {
-		if (scoreContainerRef.current) {
+		if (scoreLoaded && scoreContainerRef.current) {
 			renderScore(scoreContainerRef.current, editorScores[historyIndex].score);
 		}
 		if (process.env.NODE_ENV === "development"){
@@ -380,14 +384,18 @@ export default function Editor({ historySize, scoreID } : EditorProps) {
 	}
 	
 	return (
-		<div ref={editorContainerRef} className={styles.container} onKeyDown={handleKeyDown} tabIndex={0}>
-			<h2>{scoreMetadata?.Name ? scoreMetadata.Name : "Untitled Score"}</h2>
-			<div className={styles['controls-div']} >
-				<EditorControls buttonPressCallback={controlButtonHandler} editorScore={editorScores[historyIndex]} historyIndex={historyIndex}/>
-			</div>
-			<div ref={scoreContainerRef} style={{width: responsiveRendererVariables.rendererWidth, margin: "auto"}} className={styles['score-container']} onClick={selectNote}>
-				
-			</div>
+		<div>
+			{!scoreLoaded ? <p>Loading score...</p> :
+				<div ref={editorContainerRef} className={styles.container} onKeyDown={handleKeyDown} tabIndex={0}>
+						<h2>{scoreMetadata?.Name ? scoreMetadata.Name : "Untitled Score"}</h2>
+						<div className={styles['controls-div']} >
+							<EditorControls buttonPressCallback={controlButtonHandler} editorScore={editorScores[historyIndex]} historyIndex={historyIndex}/>
+						</div>
+						<div ref={scoreContainerRef} style={{width: responsiveRendererVariables.rendererWidth, margin: "auto"}} className={styles['score-container']} onClick={selectNote}>
+							
+						</div>
+				</div>
+			}
 		</div>
 	);
 }
