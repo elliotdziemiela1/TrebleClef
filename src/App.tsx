@@ -8,25 +8,18 @@ import AuthPage from "./auth/AuthPage";
 import TestPage from "./testPage.tsx";
 import styles from "./App.module.scss";
 import HandleCreationPage from "./HandleCreationPage/HandleCreationPage.tsx";
+import { useState } from "react";
 
 function App() {
   const authCtx = useAuthContext();
-
-  // if (authCtx.status === "loading") {
-  //   return (<h1>Loading auth...</h1>)
-  // }
-
-  // if (authCtx.status === "unauthenticated") {
-  //   return <AuthPage />;
-  // }
-  
+  const [ newScoreID, setNewScoreID ] = useState(window.crypto.randomUUID());
   return (
     <BrowserRouter>
       <div className="App">
         <Navbar expand="sm" bg="light" >
           <Nav>
             <Nav.Link as={Link} to="/">Home</Nav.Link>
-            <Nav.Link as={Link} to="/editor">Editor</Nav.Link>
+            <Nav.Link as={Link} to={"/editor/" + newScoreID} onClick={() => {setNewScoreID(window.crypto.randomUUID())}}>Editor</Nav.Link>
           </Nav>
           <div className={styles.profileWidget}>
             {authCtx.status === "authenticated" ? (
@@ -47,7 +40,7 @@ function App() {
           :
           <Routes>
             <Route path="/" element={<Home/>}/>
-            <Route path="/editor" element={<EditorPage/>}/>
+            <Route path="/editor/:scoreID" element={<EditorPage/>}/>
             <Route path="/test" element={<TestPage/>}/>
             <Route path="/auth" element={<AuthPage/>}/>
           </Routes>

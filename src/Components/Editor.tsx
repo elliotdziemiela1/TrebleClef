@@ -1,10 +1,12 @@
 import styles from './Editor.module.scss';
-import { useRef, useLayoutEffect, useReducer, useMemo, useEffect } from 'react';
+import { useRef, useState, useLayoutEffect, useReducer, useMemo, useEffect } from 'react';
 import { calcNoteWidth, renderScore, glyphs, measuresPerStave, BASELINE_PIXELS_PER_MEASURE } from '../engine/renderer';
 import { emptyScore, type Score, type Note, type Measure, type Duration } from '../engine/score';
 import { responsiveRendererVariables, pixelsPerStaveY, staveStartX,  
 	measureWidthPadding } from '../engine/renderer'; // Will use these soon
 import { HISTORY_SIZE } from '../EditorPage/EditorPage';
+import { useServerCalls } from '../serverCalls/serverCalls';
+import { DefaultScoreMetadata, type ScoreMetadata } from '../types/types';
 
 type EditorScore = { 
 	score: Score, // the musical score
@@ -13,7 +15,8 @@ type EditorScore = {
 }
 
 interface EditorProps {
-	historySize : number
+	historySize : number,
+	scoreID : string
 }
 
 const noteNames = ['a','b','c','d','e','f','g']
@@ -51,8 +54,18 @@ function getMeasureNoteXLocations(score : Score) : number[][] {
 
 const demoMeasureNoteLocations = getMeasureNoteXLocations(emptyScore);
 
-export default function Editor({ historySize } : EditorProps) {
+
+
+// THe Editor component is the main component for the score editor. It contains the score renderer and the controls for editing the score. 
+// It manages the history of scores for undo/redo functionality. When a the user wants to load a score in the editor, they are redirected
+// to the editor page containing this component, with the scoreID as a URL parameter. This component loads the score from the server upon 
+// mounting. If the server doesn't return a score for this scoreID, the editor will load a new, empty score, and set a newScoreFlag state
+// variable. When saving a score, if the newScoreFlag is set, the client will send a post to the server, otherwise it sends a put. When 
+// saving as, there will be an option to overwrite or create a new score with the new data.
+export default function Editor({ historySize, scoreID } : EditorProps) {
+	const serverCalls = useServerCalls();
 	const noteChangeStartTime = useRef(0);
+
 
 	const initialEditorScoresHistory = useMemo(() => {
 		return Array.from({length: historySize}, () : EditorScore =>{
@@ -66,6 +79,8 @@ export default function Editor({ historySize } : EditorProps) {
 
 	const scoreContainerRef = useRef<HTMLDivElement>(null);
 	const editorContainerRef = useRef<HTMLDivElement>(null);
+
+	const [ scoreMetadata, setScoreMetadata ] = useState<ScoreMetadata>(DefaultScoreMetadata);
 	
 	// index into history of scores. historySize-1 = latest score, 0 = oldest score.
 	const [ historyIndex, historyIndexDispatch ] = useReducer((state, action) => {
@@ -77,6 +92,9 @@ export default function Editor({ historySize } : EditorProps) {
 	}, historySize-1);
 	
 	// array for current EditorScore and it's history. First element is oldest, last is newest.
+	// if update is true, simply updates the current EditorScore in the history. 
+	// If update is false, it deletes the oldest EditorScore and pushes the new one to the end of the array, effectively
+	// saving the history of the previous edit.
 	const [ editorScores, editorScoresReducer ] = useReducer((state : EditorScore[], action : { editorScore: EditorScore, update: boolean }) => {
 		// move to newly created score frame
 		historyIndexDispatch(historySize-1); 
@@ -91,9 +109,22 @@ export default function Editor({ historySize } : EditorProps) {
 			return [...state.slice(0,historySize-1), action.editorScore];
 		}
 	}, initialEditorScoresHistory as EditorScore[]);
-	
-	
-	
+
+	// load score from server based on scoreID in URL parameter. If no scoreID is provided, load a new empty score.
+	useEffect(() => {
+		const loadScore = async () => {
+			// Load score from server
+			try {
+				const score = await serverCalls.getScore(scoreID!);
+				setScoreMetadata(score.metadata);
+				editorScoresReducer({ editorScore: { score: score.score, measureNoteLocations: getMeasureNoteXLocations(score.score), selectedNoteIdx: undefined }, update: true });
+			} catch (error) {
+				console.log("Score with this ID not found. Created new empty score.")	
+			}
+		}
+		loadScore();
+	}, []);
+
 	// deselect old node and select new node in current score
 	function changeSelectedNote(newIdx : number[]){
 		const newEditorScore : EditorScore = structuredClone(editorScores[historyIndex]);
@@ -350,6 +381,7 @@ export default function Editor({ historySize } : EditorProps) {
 	
 	return (
 		<div ref={editorContainerRef} className={styles.container} onKeyDown={handleKeyDown} tabIndex={0}>
+			<h2>{scoreMetadata?.Name ? scoreMetadata.Name : "Untitled Score"}</h2>
 			<div className={styles['controls-div']} >
 				<EditorControls buttonPressCallback={controlButtonHandler} editorScore={editorScores[historyIndex]} historyIndex={historyIndex}/>
 			</div>

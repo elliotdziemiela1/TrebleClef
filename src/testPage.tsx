@@ -1,43 +1,43 @@
 import { useState } from "react";
 import { useServerCalls } from "./serverCalls/serverCalls";
-import type { UserProfile } from "./types/types";
+import type { DatabaseUserProfile} from "./types/types";
 import type { Score } from "./engine/score";
 
-const dummyUserProfile1: UserProfile = {
+const dummyUserProfile1: DatabaseUserProfile = {
     Email: "user1@example.com",
-    Username: "user1",
+    Username: "Joe",
     Number_of_scores: 0,
     Bio: "Love playing music"
 };
 
-const updatedBioDummyUserProfile1: UserProfile = {
+const updatedBioDummyUserProfile1: DatabaseUserProfile = {
     Email: "user1@example.com",
-    Username: "user1",
+    Username: "Joe",
     Number_of_scores: 0,
     Bio: "Updated bio for user1"
 };
 
-const updatedUsernameDummyUserProfile1: UserProfile = {
+const updatedUsernameDummyUserProfile1: DatabaseUserProfile = {
     Email: "user1@example.com",
-    Username: "updateduser1",
+    Username: "JoeUpdated",
     Number_of_scores: 0,
     Bio: "Love playing music"
 };
 
-const dummyUserProfile2: UserProfile = {
+const dummyUserProfile2: DatabaseUserProfile = {
     Email: "user2@example.com",
     Username: "user2",
     Number_of_scores: 0,
     Bio: "Composer and musician"
 };
 
-const updatedBioDummyUserProfile2: UserProfile = {
+const updatedBioDummyUserProfile2: DatabaseUserProfile = {
     Email: "user2@example.com",
     Username: "user2",
     Number_of_scores: 3,
     Bio: "Updated bio for user2"
 };
-const updatedUsernameDummyUserProfile2: UserProfile = {
+const updatedUsernameDummyUserProfile2: DatabaseUserProfile = {
     Email: "user2@example.com",
     Username: "updateduser2",
     Number_of_scores: 3,
@@ -73,10 +73,10 @@ const dummyScores : Score[] = [
     {
         "measures": [
             { "notes": [
-                    { "keys": ["c/2"], "duration": 4, "type": "r" },
-                    { "keys": ["b/2"], "duration": 4, "type": "r" },
-                    { "keys": ["b/2"], "duration": 4, "type": "r" },
-                    { "keys": ["b/2"], "duration": 4, "type": "r" }
+                    { "keys": ["c/3"], "duration": 4, "type": "r" },
+                    { "keys": ["b/3"], "duration": 4, "type": "r" },
+                    { "keys": ["b/3"], "duration": 4, "type": "r" },
+                    { "keys": ["b/3"], "duration": 4, "type": "r" }
             ] },
         ],
         "clef": "treble"
@@ -86,7 +86,7 @@ const dummyScores : Score[] = [
 const dummyScoreMetadatas = [
     {
         "Name": "Test 2.1",
-        "Author_name": "user1",
+        "Author_name": "Joe",
         "Date_time_created": "2026-07-23T00:28:36Z",
         "Date_time_last_edited": "2026-07-23T00:28:36Z",
         "Primary_genre": "Rock",
@@ -101,7 +101,7 @@ const dummyScoreMetadatas = [
     }, 
     {
         "Name": "Test 2.2",
-        "Author_name": "user1",
+        "Author_name": "Joe",
         "Date_time_created": "2026-07-23T00:28:36Z",
         "Date_time_last_edited": "2026-07-23T00:28:36Z",
         "Primary_genre": "Electronic",
@@ -217,14 +217,14 @@ export default function TestPage(){
                     }}>Test createScore with score 1</button>
                 <button onClick={async () => {
                     try { 
-                        await serverCalls.createScore({scoreID: dummyScoreIDs[0], metadata: dummyScoreMetadatas[1], score: dummyScores[0]})
+                        await serverCalls.createScore({scoreID: dummyScoreIDs[1], metadata: dummyScoreMetadatas[1], score: dummyScores[1]})
                         setMessage("Score successfully created")
                         setError("");
                     } catch (err : any) {
                         setError(err.message);
                         setMessage("")
                     }
-                    }}>Test createScore with different data but same id as score 1
+                    }}>Test createScore with score 2
                 </button>
                 <button onClick={async () => {
                     try { 

@@ -1,6 +1,5 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import { useAuthContext } from "./AuthContext";
-import { useServerCalls } from "../serverCalls/serverCalls";
 
 export default function SignIn({ onSwitchToSignUp, needsEmailConfirmation }: { onSwitchToSignUp: () => void, needsEmailConfirmation : (email: string, needsConfirmation: boolean) => void }) {
   const authCtx = useAuthContext();
@@ -8,7 +7,6 @@ export default function SignIn({ onSwitchToSignUp, needsEmailConfirmation }: { o
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const serverCalls = useServerCalls();
 
 
   async function handleSubmit(e: FormEvent) {
