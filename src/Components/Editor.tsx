@@ -348,11 +348,16 @@ export default function Editor({ historySize, scoreID } : EditorProps) {
 			setSavedMessage("You must be logged in to save a score.");
 			return;
 		}
-		console.log("metadata: " + JSON.stringify(scoreMetadata))
+		// remove selected blue note from score before saving
+		const newScore : Score = editorScores[historyIndex].score
+		if (!!editorScores[historyIndex].selectedNoteIdx)
+			newScore.measures[editorScores[historyIndex].selectedNoteIdx[0]].notes[editorScores[historyIndex].selectedNoteIdx[1]].color = "black";
+
 		if (isNewScore) {
+			// create a new score in database
 			try {
 				const newMetadata = { ...scoreMetadata, Date_time_created: new Date().toISOString().slice(0, 19) + 'Z', Date_time_last_edited: new Date().toISOString().slice(0, 19) + 'Z' };
-				await serverCalls.createScore({ scoreID: scoreID, score: editorScores[historyIndex].score, metadata: newMetadata } as DatabaseScore);
+				await serverCalls.createScore({ scoreID: scoreID, score: newScore, metadata: newMetadata } as DatabaseScore);
 				setSavedMessage("Score saved successfully!");
 				setScoreMetadata(newMetadata);
 				setIsNewScore(false);
@@ -361,9 +366,10 @@ export default function Editor({ historySize, scoreID } : EditorProps) {
 				setSavedMessage("Error saving score.");
 			}
 		} else {
+			// update score in database
 			try {
 				const newMetadata = { ...scoreMetadata, Date_time_last_edited: new Date().toISOString().slice(0, 19) + 'Z' };
-				await serverCalls.updateScore({ scoreID: scoreID, score: editorScores[historyIndex].score, metadata: newMetadata } as DatabaseScore);
+				await serverCalls.updateScore({ scoreID: scoreID, score: newScore, metadata: newMetadata } as DatabaseScore);
 				setSavedMessage("Score saved successfully!");
 				setScoreMetadata(newMetadata);
 				setIsNewScore(false);
@@ -374,6 +380,7 @@ export default function Editor({ historySize, scoreID } : EditorProps) {
 		}
 	}
 
+	// create a new score with new scoreID with the data from the current score.
 	async function handleSaveAsNewFile(metaData : ScoreMetadata) {
 		if (!authCtx.profile?.Username){
 			setSavedMessage("You must be logged in to save a score.");
@@ -381,8 +388,14 @@ export default function Editor({ historySize, scoreID } : EditorProps) {
 		}
 		try {
 			const newID = window.crypto.randomUUID();
+
+			// remove selected blue note from score before saving
+			const newScore : Score = editorScores[historyIndex].score
+			if (!!editorScores[historyIndex].selectedNoteIdx)
+				newScore.measures[editorScores[historyIndex].selectedNoteIdx[0]].notes[editorScores[historyIndex].selectedNoteIdx[1]].color = "black";
+
 			const newMetadata = { ...metaData, Date_time_created: new Date().toISOString().slice(0, 19) + 'Z', Date_time_last_edited: new Date().toISOString().slice(0, 19) + 'Z' };
-			await serverCalls.createScore({ scoreID: newID, score: editorScores[historyIndex].score, metadata: newMetadata } as DatabaseScore);
+			await serverCalls.createScore({ scoreID: newID, score: newScore, metadata: newMetadata } as DatabaseScore);
 			setScoreMetadata(newMetadata);
 			setSavedMessage("Score saved successfully!");
 			window.location.href = `/editor/${newID}`;
