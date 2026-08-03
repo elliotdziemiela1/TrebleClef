@@ -7,15 +7,15 @@ export default function ScoreSelector({scoreClicked} : {scoreClicked : (scoreID:
     const serverCalls = useServerCalls();
     const [ scoreMetadatas, setScoreMetadatas ] = useState<ScoreMetadataWithID[]>([]);
 
+    const update = async () => {
+        const metadatas = (await serverCalls.getAllMyScoreMetadatas()).sort(
+            (a : ScoreMetadataWithID, b : ScoreMetadataWithID) => {
+                return b.Date_time_last_edited > a.Date_time_last_edited ? 1 : -1;
+            }
+        )
+        setScoreMetadatas(metadatas);
+    }
     useEffect(() => {
-        const update = async () => {
-            const metadatas = (await serverCalls.getAllMyScoreMetadatas()).sort(
-                (a : ScoreMetadataWithID, b : ScoreMetadataWithID) => {
-                    return b.Date_time_last_edited > a.Date_time_last_edited ? -1 : 1;
-                }
-            )
-            setScoreMetadatas(metadatas);
-        }
         update();
     }, [])
 
@@ -23,29 +23,36 @@ export default function ScoreSelector({scoreClicked} : {scoreClicked : (scoreID:
         <div className={styles["score-selector-container"]}>
             {scoreMetadatas.map((metadata : ScoreMetadataWithID) => {
                 return (
-                    <ScoreMetaCard key={metadata.scoreID} metadata={metadata} onClick={scoreClicked} />
+                    <ScoreMetaCard key={metadata.scoreID} metadata={metadata} onClick={scoreClicked} 
+                        deleteCallback={async () => {
+                            try {
+                                await serverCalls.deleteScore(metadata.scoreID)
+                                console.log("Deleted score with ID:", metadata.scoreID)
+                                update();
+                            } catch (err) {
+                                console.error("Error deleting score:", err)
+                            }
+                        }} />
                 )
             })}
         </div>
     )
 }
 
-function ScoreMetaCard({metadata, onClick} : {metadata : ScoreMetadataWithID, onClick : (scoreID: string) => void}){
+function ScoreMetaCard({metadata, onClick, deleteCallback} : {metadata : ScoreMetadataWithID, 
+    onClick : (scoreID: string) => void, deleteCallback : (scoreID: string) => void }){
     return (
-        <span onClick={() => onClick(metadata.scoreID)}>
+        <span onClick={() => onClick(metadata.scoreID)} className={styles["score-meta-card"]} >
             <p>{metadata.Name}</p>
             <p>By: {metadata.Author_name}</p>
-            <p>Created: {metadata.Date_time_created}</p>
-            <p>Last Edited: {metadata.Date_time_last_edited}</p>
-            <p>Primary Genre: {metadata.Primary_genre}</p>
-            <p>Secondary Genres: {metadata.Secondary_genres?.join(", ")}</p>
-            <p>Number of Ratings: {metadata.Number_of_ratings}</p>
-            <p>Total Stars: {metadata.Total_number_of_stars}</p>
-            <p>Popularity Score: {metadata.Popularity_score}</p>
-            <p>Total Measures: {metadata.Total_measures}</p>
-            <p>BPM: {metadata.BPM}</p>
-            <p>Primary Instrument: {metadata.Primary_instrument}</p>
-            <p>Secondary Instruments: {metadata.Secondary_instruments?.join(", ")}</p>
+            <p>Created: {metadata.Date_time_created?.slice(5,10) + "-" + metadata.Date_time_created?.slice(0, 4)}</p>
+            <p>Last Edited: {metadata.Date_time_last_edited?.slice(5,10) + "-" + metadata.Date_time_last_edited?.slice(0, 4)}</p>
+            <button onClick={(e) => {
+                e.stopPropagation();
+                deleteCallback(metadata.scoreID);
+            }}>
+                Delete
+            </button>
         </span>
     )
 }

@@ -1,4 +1,25 @@
 .score-selector-container {
+    margin: 0 auto;
     display: grid;
-    grid-template-columns: 4;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    max-width: fit-content;
+    gap: 0.75rem;
+    padding: 1rem;
+    border-radius: 0.3rem;
+    background: linear-gradient(135deg, #f9e0c2 0%, #d98c4a 100%);
+    border: 1px solid rgba(120, 60, 20, 0.18);
+    box-shadow: 0 8px 24px rgba(118, 62, 24, 0.14);
+    color: #5b2e10;
+    
+    > * {
+        border-radius: 0.85rem;
+        background: rgba(255, 247, 239, 0.9);
+        padding: 0.75rem 0.9rem;
+        border: 1px solid rgba(120, 60, 20, 0.12);
+        
+    };
+    .score-meta-card:hover {
+        background: rgb(201, 179, 158);
+    }
 }
+

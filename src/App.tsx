@@ -16,27 +16,30 @@ function App() {
   const [ newScoreID, setNewScoreID ] = useState(window.crypto.randomUUID());
   return (
     <BrowserRouter>
-      <div className="App">
-        <Navbar expand="sm" bg="light" >
-          <Nav>
-            <Nav.Link as={Link} to="/">Home</Nav.Link>
-            <Nav.Link as={Link} to="/myScores">My Scores</Nav.Link>
-            <Nav.Link as={Link} to={"/editor/" + newScoreID} onClick={() => {setNewScoreID(window.crypto.randomUUID())}}>Editor</Nav.Link>
-          </Nav>
-          <div className={styles.profileWidget}>
-            {authCtx.status === "authenticated" ? (
-              <div>
-                <p>{authCtx.profile?.Username}</p>
-                <button onClick={() => authCtx.signOut()}>Sign out</button>
-              </div>
-            ) : (
-              <div>
-                <button onClick={() => window.location.href = "/auth"}>Sign in</button>
-                <button onClick={() => window.location.href = "/auth"}>Sign up</button>
-              </div>
-            )}
-          </div>
-        </Navbar>
+      <div className={styles["app"]}>
+        <div className={styles["navbar-container"]} >
+          <Navbar expand="sm">
+            <p className={styles["navbar-brand"]}>Treble Clef</p>
+            <Nav>
+              <Nav.Link as={Link} to="/">Home</Nav.Link>
+              <Nav.Link as={Link} to="/myScores">My Scores</Nav.Link>
+              <Nav.Link as={Link} to={"/editor/" + newScoreID} onClick={() => {setNewScoreID(window.crypto.randomUUID())}}>Editor</Nav.Link>
+            </Nav>
+            <div className={styles["profile-widget"]}>
+              {authCtx.status === "authenticated" ? (
+                <>
+                  <p>{authCtx.profile?.Username}</p>
+                  <button onClick={() => authCtx.signOut()}>Sign out</button>
+                </>
+              ) : (
+                <>
+                  <button onClick={() => window.location.href = "/auth"}>Sign in</button>
+                  <button onClick={() => window.location.href = "/auth"}>Sign up</button>
+                </>
+              )}
+            </div>
+          </Navbar>
+        </div>
         {(authCtx.status === "authenticated" && !authCtx.profile?.Username.length) ? 
           <HandleCreationPage/> 
           :

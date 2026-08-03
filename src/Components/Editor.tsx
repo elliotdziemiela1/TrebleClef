@@ -8,6 +8,7 @@ import { HISTORY_SIZE } from '../EditorPage/EditorPage';
 import { useServerCalls } from '../serverCalls/serverCalls';
 import { DefaultScoreMetadata, type DatabaseScore, type ScoreMetadata } from '../types/types';
 import { useAuthContext } from '../auth/AuthContext';
+import { Pencil } from 'lucide-react';
 
 type EditorScore = { 
 	score: Score, // the musical score
@@ -456,7 +457,8 @@ export default function Editor({ historySize, scoreID } : EditorProps) {
 		<div>
 			{!scoreLoaded ? <p>Loading score...</p> :
 				<div ref={editorContainerRef} className={styles.container} onKeyDown={handleKeyDown} tabIndex={0}>
-						<h2>{scoreMetadata?.Name ? scoreMetadata.Name : " "}</h2>
+						<input type="text" value={scoreMetadata?.Name} onChange={(e) => setScoreMetadata({...scoreMetadata, Name: e.target.value})} placeholder="Enter score name" className={styles["score-name-input"]}/>
+						<Pencil style={{margin: "0 0 12px 0"}}size={24}/>
 						{savedMessage && <p className={styles.savedMessage}>{savedMessage}</p>}
 						<div className={styles['controls-div']} >
 							<EditorControls buttonPressCallback={controlButtonHandler} editorScore={editorScores[historyIndex]} historyIndex={historyIndex}/>

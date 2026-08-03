@@ -17,6 +17,8 @@
   }
 }
 
+
+
 .hero {
   position: relative;
 
@@ -181,4 +183,26 @@
     right: 0;
     border-right-color: var(--border);
   }
+}
+
+.profile-widget {
+  margin-left: auto;
+  padding-right: 1rem;
+  display: flex;
+  flex-direction: row;
+  justify-content: right;
+  gap: 2rem;
+}
+
+.navbar-container {
+  padding: 0 20%;
+  background-color: rgb(255, 204, 128);
+  font-size: 1.2rem;
+}
+
+.navbar-brand {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #5b2e10;
+  margin-right: 2rem;
 }

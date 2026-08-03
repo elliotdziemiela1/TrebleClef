@@ -94,3 +94,10 @@
         }
     }
 }
+
+// make this input Show no border and have large text, and have the text centered.
+.score-name-input {
+    border: none;
+    font-size: 1.5rem;
+    text-align: center;
+}
